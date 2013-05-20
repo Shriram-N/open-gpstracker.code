@@ -28,9 +28,10 @@
  */
 package nl.sogeti.android.gpstracker.breadcrumbs;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -44,13 +45,6 @@ import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 
-import org.apache.ogt.http.Header;
-import org.apache.ogt.http.HttpEntity;
-import org.apache.ogt.http.HttpResponse;
-import org.apache.ogt.http.client.methods.HttpGet;
-import org.apache.ogt.http.client.methods.HttpUriRequest;
-import org.apache.ogt.http.impl.client.DefaultHttpClient;
-import org.apache.ogt.http.util.EntityUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -59,74 +53,55 @@ import android.content.Context;
 import android.util.Log;
 
 /**
- * An asynchronous task that communicates with Twitter to retrieve a request
- * token. (OAuthGetRequestToken) After receiving the request token from Twitter,
- * pop a browser to the user to authorize the Request Token.
- * (OAuthAuthorizeToken)
+ * An asynchronous task that communicates with Twitter to retrieve a request token. (OAuthGetRequestToken) After receiving the request token from Twitter, pop a browser to the user to authorize the
+ * Request Token. (OAuthAuthorizeToken)
  */
 public class GetBreadcrumbsBundlesTask extends BreadcrumbsTask
 {
 
    final String TAG = "OGT.GetBreadcrumbsBundlesTask";
    private OAuthConsumer mConsumer;
-   private DefaultHttpClient mHttpclient;
-   
+
    private Set<Integer> mBundleIds;
    private LinkedList<Object[]> mBundles;
 
-   /**
-    * We pass the OAuth consumer and provider.
-    * 
-    * @param mContext Required to be able to start the intent to launch the
-    *           browser.
-    * @param httpclient
-    * @param listener
-    * @param provider The OAuthProvider object
-    * @param mConsumer The OAuthConsumer object
-    */
-   public GetBreadcrumbsBundlesTask(Context context, BreadcrumbsService adapter, ProgressListener listener, DefaultHttpClient httpclient, OAuthConsumer consumer)
+   public GetBreadcrumbsBundlesTask(Context context, BreadcrumbsService adapter, ProgressListener listener, OAuthConsumer consumer)
    {
       super(context, adapter, listener);
-      mHttpclient = httpclient;
       mConsumer = consumer;
 
    }
 
    /**
-    * Retrieve the OAuth Request Token and present a browser to the user to
-    * authorize the token.
+    * Retrieve the OAuth Request Token and present a browser to the user to authorize the token.
     */
    @Override
    protected Void doInBackground(Void... params)
    {
-      HttpEntity responseEntity = null;
       mBundleIds = new HashSet<Integer>();
       mBundles = new LinkedList<Object[]>();
+      HttpURLConnection connection = null;
       try
       {
-         HttpUriRequest request = new HttpGet("http://api.gobreadcrumbs.com/v1/bundles.xml");
+         URL request = new URL("http://api.gobreadcrumbs.com/v1/bundles.xml");
          if (isCancelled())
          {
             throw new IOException("Fail to execute request due to canceling");
          }
-         mConsumer.sign(request);
-         if( BreadcrumbsAdapter.DEBUG )
+         connection = (HttpURLConnection) request.openConnection();
+         connection.setDoOutput(false);
+         connection.setDoInput(true);
+         mConsumer.sign(connection);
+         if (BreadcrumbsAdapter.DEBUG)
          {
-            Log.d( TAG, "Execute request: "+request.getURI() );
-            for( Header header : request.getAllHeaders() )
-            {
-               Log.d( TAG, "   with header: "+header.toString());
-            }
+            Log.d(TAG, "Execute request: " + request);
          }
-         HttpResponse response = mHttpclient.execute(request);
-         responseEntity = response.getEntity();
-         InputStream is = responseEntity.getContent();
-         InputStream stream = new BufferedInputStream(is, 8192);
-         if( BreadcrumbsAdapter.DEBUG )
+         InputStream stream = connection.getInputStream();
+         if (BreadcrumbsAdapter.DEBUG)
          {
             stream = XmlCreator.convertStreamToLoggedStream(TAG, stream);
          }
-         
+
          XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
          factory.setNamespaceAware(true);
          XmlPullParser xpp = factory.newPullParser();
@@ -147,7 +122,7 @@ public class GetBreadcrumbsBundlesTask extends BreadcrumbsTask
             {
                if ("bundle".equals(xpp.getName()) && bundleId != null)
                {
-                  mBundles.add( new Object[]{bundleId, bundleName, bundleDescription} );
+                  mBundles.add(new Object[] { bundleId, bundleName, bundleDescription });
                }
                tagName = null;
             }
@@ -193,23 +168,14 @@ public class GetBreadcrumbsBundlesTask extends BreadcrumbsTask
       {
          handleError(mContext.getString(R.string.taskerror_breadcrumbs_bundle), e, "A problem while reading the XML data");
       }
-      catch (IllegalStateException e) 
+      catch (IllegalStateException e)
       {
          handleError(mContext.getString(R.string.taskerror_breadcrumbs_bundle), e, "A problem during communication");
       }
       finally
       {
-         if (responseEntity != null)
-         {
-            try
-            {
-               EntityUtils.consume(responseEntity);
-            }
-            catch (IOException e)
-            {
-               Log.w(TAG, "Failed closing inputstream");
-            }
-         }
+         if (connection != null)
+            connection.disconnect();
       }
       return null;
    }
@@ -217,14 +183,14 @@ public class GetBreadcrumbsBundlesTask extends BreadcrumbsTask
    @Override
    protected void updateTracksData(BreadcrumbsTracks tracks)
    {
-      tracks.setAllBundleIds( mBundleIds );
-      
-      for( Object[] bundle : mBundles )
+      tracks.setAllBundleIds(mBundleIds);
+
+      for (Object[] bundle : mBundles)
       {
          Integer bundleId = (Integer) bundle[0];
          String bundleName = (String) bundle[1];
          String bundleDescription = (String) bundle[2];
-         
+
          tracks.addBundle(bundleId, bundleName, bundleDescription);
       }
    }

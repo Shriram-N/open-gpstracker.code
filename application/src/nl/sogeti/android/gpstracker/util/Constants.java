@@ -79,7 +79,7 @@ public class Constants
    public static final String TMPICTUREFILE_SUBPATH = "media_tmp.tmp";
    public static final Uri NAME_URI = Uri.parse("content://" + GPStracking.AUTHORITY + ".string");
    public static final int GOOGLE = 0;
-   public static final int OSM = 1;
+   public static final int MAPQUEST = 2;
    public static final String JOGRUNNER_AUTH = "JOGRUNNER_AUTH";
    public static final String EXPORT_TYPE = "SHARE_TYPE";
    public static final String EXPORT_GPXTARGET = "EXPORT_GPXTARGET";
@@ -91,6 +91,7 @@ public class Constants
    public static final int OSM_MAKNIK = 1;
    public static final int OSM_CYCLE = 2;
    public static final String OSMBASEOVERLAY = "OSM_BASE_OVERLAY";
+   public static final String MAPFORGE_BASEOVERLAY = "MAPFORGE_BASEOVERLAY";
 
    public static final String LOGGING_INTERVAL = "customprecisiontime";
    public static final String LOGGING_DISTANCE = "customprecisiondistance";
@@ -248,5 +249,8 @@ public class Constants
     * The track that is being logged
     */
    public static final String EXTRA_TRACK = "nl.sogeti.android.gpstracker.EXTRA_TRACK";
+   public static final String OSM_PROVIDER = "OSM";
+   public static final String GOOGLE_PROVIDER = "GOOGLE";
+   public static final String MAPQUEST_PROVIDER = "MAPQUEST";
 
 }
