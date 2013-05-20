@@ -28,9 +28,12 @@
  */
 package nl.sogeti.android.gpstracker.actions.tasks;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.actions.ShareTrack;
@@ -40,22 +43,13 @@ import nl.sogeti.android.gpstracker.db.GPStracking.Media;
 import nl.sogeti.android.gpstracker.db.GPStracking.MetaData;
 import nl.sogeti.android.gpstracker.oauth.PrepareRequestTokenActivity;
 import nl.sogeti.android.gpstracker.util.Constants;
-import nl.sogeti.android.gpstracker.viewer.LoggerMap;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
+import nl.sogeti.android.gpstracker.util.MultipartStreamer;
+import oauth.signpost.basic.DefaultOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
 
-import org.apache.ogt.http.HttpEntity;
-import org.apache.ogt.http.HttpException;
-import org.apache.ogt.http.HttpResponse;
-import org.apache.ogt.http.client.methods.HttpPost;
-import org.apache.ogt.http.entity.mime.HttpMultipartMode;
-import org.apache.ogt.http.entity.mime.MultipartEntity;
-import org.apache.ogt.http.entity.mime.content.FileBody;
-import org.apache.ogt.http.entity.mime.content.StringBody;
-import org.apache.ogt.http.impl.client.DefaultHttpClient;
-import org.apache.ogt.http.util.EntityUtils;
+import org.apache.http.HttpException;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -70,7 +64,7 @@ import android.widget.Toast;
 
 /**
  * ????
- *
+ * 
  * @version $Id:$
  * @author rene (c) Jul 9, 2011, Sogeti B.V.
  */
@@ -88,7 +82,7 @@ public class OsmSharing extends GpxCreator
    {
       super(context, trackUri, OSM_FILENAME, attachments, listener);
    }
-   
+
    public void resumeOsmSharing(Uri fileUri, Uri trackUri)
    {
       mFileUri = fileUri;
@@ -99,84 +93,79 @@ public class OsmSharing extends GpxCreator
    @Override
    protected Uri doInBackground(Void... params)
    {
-      if( mFileUri == null )
+      if (mFileUri == null)
       {
          mFileUri = super.doInBackground(params);
       }
       sendToOsm(mFileUri, mTrackUri);
       return mFileUri;
    }
-   
+
    @Override
    protected void onPostExecute(Uri resultFilename)
    {
       super.onPostExecute(resultFilename);
-      
+
       CharSequence text = mContext.getString(R.string.osm_success) + responseText;
       Toast toast = Toast.makeText(mContext, text, Toast.LENGTH_LONG);
       toast.show();
    }
-   
+
    /**
-    * POST a (GPX) file to the 0.6 API of the OpenStreetMap.org website
-    * publishing this track to the public.
+    * POST a (GPX) file to the 0.6 API of the OpenStreetMap.org website publishing this track to the public.
     * 
     * @param fileUri
     * @param contentType
     */
    private void sendToOsm(final Uri fileUri, final Uri trackUri)
    {
-      CommonsHttpOAuthConsumer consumer = osmConnectionSetup();
-      if( consumer == null )
+      DefaultOAuthConsumer consumer = osmConnectionSetup();
+      if (consumer == null)
       {
          requestOpenstreetmapOauthToken();
          handleError(mContext.getString(R.string.osm_task), null, mContext.getString(R.string.osmauth_message));
       }
-      
-      String visibility = PreferenceManager.getDefaultSharedPreferences(mContext).getString(Constants.OSM_VISIBILITY, "trackable");
+
+      String visibility = PreferenceManager.getDefaultSharedPreferences(mContext).getString(Constants.OSM_VISIBILITY,
+            "trackable");
       File gpxFile = new File(fileUri.getEncodedPath());
 
-      String url = mContext.getString(R.string.osm_post_url);
-      DefaultHttpClient httpclient = new DefaultHttpClient();
-      HttpResponse response = null;
       int statusCode = 0;
       Cursor metaData = null;
       String sources = null;
-      HttpEntity responseEntity = null;
+      HttpURLConnection connection = null;
+      MultipartStreamer multipart = null;
       try
       {
-         metaData = mContext.getContentResolver().query(Uri.withAppendedPath(trackUri, "metadata"), new String[] { MetaData.VALUE }, MetaData.KEY + " = ? ",
-               new String[] { Constants.DATASOURCES_KEY }, null);
+         metaData = mContext.getContentResolver().query(Uri.withAppendedPath(trackUri, "metadata"),
+               new String[] { MetaData.VALUE }, MetaData.KEY + " = ? ", new String[] { Constants.DATASOURCES_KEY },
+               null);
          if (metaData.moveToFirst())
          {
             sources = metaData.getString(0);
          }
-         if (sources != null && sources.contains(LoggerMap.GOOGLE_PROVIDER))
+         if (sources != null && sources.contains(Constants.GOOGLE_PROVIDER))
          {
             throw new IOException("Unable to upload track with materials derived from Google Maps.");
          }
 
          // The POST to the create node
-         HttpPost method = new HttpPost(url);
-         
-         String tags = mContext.getString(R.string.osm_tag) + " " +queryForNotes();
-         
+         URL url = new URL(mContext.getString(R.string.osm_post_url));
+         connection = (HttpURLConnection) url.openConnection();
+         multipart = new MultipartStreamer(connection, MultipartStreamer.HttpMultipartMode.STRICT,
+               MultipartStreamer.StreamingMode.CHUNKED, consumer);
+
          // Build the multipart body with the upload data
-         MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-         entity.addPart("file", new FileBody(gpxFile));
-         entity.addPart("description", new StringBody( ShareTrack.queryForTrackName(mContext.getContentResolver(), mTrackUri)));
-         entity.addPart("tags", new StringBody(tags));
-         entity.addPart("visibility", new StringBody(visibility));
-         method.setEntity(entity);
+         multipart.addFilePart("file", gpxFile);
+         multipart.addFormField("description", ShareTrack.queryForTrackName(mContext.getContentResolver(), mTrackUri));
+         String tags = mContext.getString(R.string.osm_tag) + " " + queryForNotes();
+         multipart.addFormField("tags", tags);
+         multipart.addFormField("visibility", visibility);
+         multipart.flush();
 
          // Execute the POST to OpenStreetMap
-         consumer.sign(method);
-         response = httpclient.execute(method);
-
-         // Read the response
-         statusCode = response.getStatusLine().getStatusCode();
-         responseEntity = response.getEntity();
-         InputStream stream = responseEntity.getContent();
+         statusCode = connection.getResponseCode();
+         InputStream stream = connection.getInputStream();
          responseText = XmlCreator.convertStreamToString(stream);
       }
       catch (OAuthMessageSignerException e)
@@ -185,7 +174,7 @@ public class OsmSharing extends GpxCreator
          editor.remove(OAUTH_TOKEN);
          editor.remove(OAUTH_TOKEN_SECRET);
          editor.commit();
-         
+
          responseText = mContext.getString(R.string.osm_failed) + e.getLocalizedMessage();
          handleError(mContext.getString(R.string.osm_task), e, responseText);
       }
@@ -195,7 +184,7 @@ public class OsmSharing extends GpxCreator
          editor.remove(OAUTH_TOKEN);
          editor.remove(OAUTH_TOKEN_SECRET);
          editor.commit();
-         
+
          responseText = mContext.getString(R.string.osm_failed) + e.getLocalizedMessage();
          handleError(mContext.getString(R.string.osm_task), e, responseText);
       }
@@ -205,7 +194,7 @@ public class OsmSharing extends GpxCreator
          editor.remove(OAUTH_TOKEN);
          editor.remove(OAUTH_TOKEN_SECRET);
          editor.commit();
-         
+
          responseText = mContext.getString(R.string.osm_failed) + e.getLocalizedMessage();
          handleError(mContext.getString(R.string.osm_task), e, responseText);
       }
@@ -216,17 +205,9 @@ public class OsmSharing extends GpxCreator
       }
       finally
       {
-         if (responseEntity != null)
-         {
-            try
-            {
-               EntityUtils.consume(responseEntity);
-            }
-            catch (IOException e)
-            {
-               Log.e(TAG, "Failed to close the content stream", e);
-            }
-         }
+         close(multipart);
+         if (connection != null)
+            connection.disconnect();
          if (metaData != null)
          {
             metaData.close();
@@ -237,28 +218,30 @@ public class OsmSharing extends GpxCreator
       {
          Log.e(TAG, "Failed to upload to error code " + statusCode + " " + responseText);
          String text = mContext.getString(R.string.osm_failed) + responseText;
-         if( statusCode == 401 )
+         if (statusCode == 401)
          {
             Editor editor = PreferenceManager.getDefaultSharedPreferences(mContext).edit();
             editor.remove(OAUTH_TOKEN);
             editor.remove(OAUTH_TOKEN_SECRET);
             editor.commit();
          }
-         
-         handleError(mContext.getString(R.string.osm_task), new HttpException("Unexpected status reported by OSM"), text);
+
+         handleError(mContext.getString(R.string.osm_task), new HttpException("Unexpected status reported by OSM"),
+               text);
       }
    }
-   
-   private CommonsHttpOAuthConsumer osmConnectionSetup()
+
+   private DefaultOAuthConsumer osmConnectionSetup()
    {
       final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
       String token = prefs.getString(OAUTH_TOKEN, "");
       String secret = prefs.getString(OAUTH_TOKEN_SECRET, "");
       boolean mAuthorized = !"".equals(token) && !"".equals(secret);
-      CommonsHttpOAuthConsumer consumer = null;
+      DefaultOAuthConsumer consumer = null;
       if (mAuthorized)
       {
-         consumer = new CommonsHttpOAuthConsumer(mContext.getString(R.string.OSM_CONSUMER_KEY), mContext.getString(R.string.OSM_CONSUMER_SECRET));
+         consumer = new DefaultOAuthConsumer(mContext.getString(R.string.OSM_CONSUMER_KEY),
+               mContext.getString(R.string.OSM_CONSUMER_SECRET));
          consumer.setTokenWithSecret(token, secret);
       }
       return consumer;
@@ -278,7 +261,8 @@ public class OsmSharing extends GpxCreator
             do
             {
                Uri noteUri = Uri.parse(mediaCursor.getString(0));
-               if (noteUri.getScheme().equals("content") && noteUri.getAuthority().equals(GPStracking.AUTHORITY + ".string"))
+               if (noteUri.getScheme().equals("content")
+                     && noteUri.getAuthority().equals(GPStracking.AUTHORITY + ".string"))
                {
                   String tag = noteUri.getLastPathSegment().trim();
                   if (!tag.contains(" "))
@@ -317,5 +301,20 @@ public class OsmSharing extends GpxCreator
       intent.putExtra(PrepareRequestTokenActivity.AUTHORIZE_URL, Constants.OSM_AUTHORIZE_URL);
 
       mContext.startActivity(intent);
-   }  
+   }
+
+   private void close(Closeable connection)
+   {
+      try
+      {
+         if (connection != null)
+         {
+            connection.close();
+         }
+      }
+      catch (IOException e)
+      {
+         Log.w(TAG, "Failed to close ", e);
+      }
+   }
 }
