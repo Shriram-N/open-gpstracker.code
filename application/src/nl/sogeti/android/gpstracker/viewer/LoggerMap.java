@@ -101,10 +101,6 @@ import com.google.android.maps.MapActivity;
  */
 public class LoggerMap extends MapActivity
 {
-
-   public static final String OSM_PROVIDER = "OSM";
-   public static final String GOOGLE_PROVIDER = "GOOGLE";
-
    private static final String INSTANCE_E6LONG = "e6long";
    private static final String INSTANCE_E6LAT = "e6lat";
    private static final String INSTANCE_ZOOM = "zoom";
@@ -186,16 +182,16 @@ public class LoggerMap extends MapActivity
 
       final Semaphore calulatorSemaphore = new Semaphore(0);
       Thread calulator = new Thread("OverlayCalculator")
-      {
-         @Override
-         public void run()
          {
-            Looper.prepare();
-            mHandler = new Handler();
-            calulatorSemaphore.release();
-            Looper.loop();
-         }
-      };
+            @Override
+            public void run()
+            {
+               Looper.prepare();
+               mHandler = new Handler();
+               calulatorSemaphore.release();
+               Looper.loop();
+            }
+         };
       calulator.start();
       try
       {
@@ -212,8 +208,8 @@ public class LoggerMap extends MapActivity
       mMapView.setBuiltInZoomControls(true);
       mMapView.setClickable(true);
 
-      TextView[] speeds = { (TextView) findViewById(R.id.speedview05), (TextView) findViewById(R.id.speedview04), (TextView) findViewById(R.id.speedview03),
-            (TextView) findViewById(R.id.speedview02), (TextView) findViewById(R.id.speedview01), (TextView) findViewById(R.id.speedview00) };
+      TextView[] speeds = { (TextView) findViewById(R.id.speedview05), (TextView) findViewById(R.id.speedview04), (TextView) findViewById(R.id.speedview03), (TextView) findViewById(R.id.speedview02),
+            (TextView) findViewById(R.id.speedview01), (TextView) findViewById(R.id.speedview00) };
       mSpeedtexts = speeds;
       mLastGPSSpeedView = (TextView) findViewById(R.id.currentSpeed);
       mLastGPSAltitudeView = (TextView) findViewById(R.id.currentAltitude);
@@ -295,13 +291,13 @@ public class LoggerMap extends MapActivity
       mLastSegmentOverlay = null;
       mMapView.clearOverlays();
       mHandler.post(new Runnable()
-      {
-         @Override
-         public void run()
          {
-            Looper.myLooper().quit();
-         }
-      });
+            @Override
+            public void run()
+            {
+               Looper.myLooper().quit();
+            }
+         });
 
       if (mWakeLock != null && mWakeLock.isHeld())
       {
@@ -317,8 +313,7 @@ public class LoggerMap extends MapActivity
 
    /*
     * (non-Javadoc)
-    * @see
-    * com.google.android.maps.MapActivity#onNewIntent(android.content.Intent)
+    * @see com.google.android.maps.MapActivity#onNewIntent(android.content.Intent)
     */
    @Override
    public void onNewIntent(Intent newIntent)
@@ -457,7 +452,7 @@ public class LoggerMap extends MapActivity
       editor.putBoolean(Constants.ALTITUDE, b);
       editor.commit();
    }
-   
+
    private void setDistanceOverlay(boolean b)
    {
       Editor editor = mSharedPreferences.edit();
@@ -492,280 +487,280 @@ public class LoggerMap extends MapActivity
        * 8 Runnable listener actions
        */
       speedCalculator = new Runnable()
-      {
-         @Override
-         public void run()
          {
-            double avgspeed = 0.0;
-            ContentResolver resolver = LoggerMap.this.getContentResolver();
-            Cursor waypointsCursor = null;
-            try
+            @Override
+            public void run()
             {
-               waypointsCursor = resolver.query(Uri.withAppendedPath(Tracks.CONTENT_URI, LoggerMap.this.mTrackId + "/waypoints"), new String[] {
-                     "avg(" + Waypoints.SPEED + ")", "max(" + Waypoints.SPEED + ")" }, null, null, null);
+               double avgspeed = 0.0;
+               ContentResolver resolver = LoggerMap.this.getContentResolver();
+               Cursor waypointsCursor = null;
+               try
+               {
+                  waypointsCursor = resolver.query(Uri.withAppendedPath(Tracks.CONTENT_URI, LoggerMap.this.mTrackId + "/waypoints"), new String[] { "avg(" + Waypoints.SPEED + ")",
+                        "max(" + Waypoints.SPEED + ")" }, null, null, null);
 
-               if (waypointsCursor != null && waypointsCursor.moveToLast())
-               {
-                  double average = waypointsCursor.getDouble(0);
-                  double maxBasedAverage = waypointsCursor.getDouble(1) / 2;
-                  avgspeed = Math.min(average, maxBasedAverage);
+                  if (waypointsCursor != null && waypointsCursor.moveToLast())
+                  {
+                     double average = waypointsCursor.getDouble(0);
+                     double maxBasedAverage = waypointsCursor.getDouble(1) / 2;
+                     avgspeed = Math.min(average, maxBasedAverage);
+                  }
+                  if (avgspeed < 2)
+                  {
+                     avgspeed = 5.55d / 2;
+                  }
                }
-               if (avgspeed < 2)
+               finally
                {
-                  avgspeed = 5.55d / 2;
+                  if (waypointsCursor != null)
+                  {
+                     waypointsCursor.close();
+                  }
                }
+               mAverageSpeed = avgspeed;
+               runOnUiThread(new Runnable()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        updateSpeedColoring();
+                     }
+                  });
             }
-            finally
-            {
-               if (waypointsCursor != null)
-               {
-                  waypointsCursor.close();
-               }
-            }
-            mAverageSpeed = avgspeed;
-            runOnUiThread(new Runnable()
-            {
-               @Override
-               public void run()
-               {
-                  updateSpeedColoring();
-               }
-            });
-         }
-      };
+         };
       mServiceConnected = new Runnable()
-      {
-         @Override
-         public void run()
          {
-            updateBlankingBehavior();
-         }
-      };
+            @Override
+            public void run()
+            {
+               updateBlankingBehavior();
+            }
+         };
       /*******************************************************
        * 8 Various dialog listeners
        */
       mNoteSelectDialogListener = new DialogInterface.OnClickListener()
-      {
+         {
 
-         @Override
-         public void onClick(DialogInterface dialog, int which)
-         {
-            Uri selected = (Uri) mGallery.getSelectedItem();
-            SegmentOverlay.handleMedia(LoggerMap.this, selected);
-         }
-      };
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+               Uri selected = (Uri) mGallery.getSelectedItem();
+               SegmentOverlay.handleMedia(LoggerMap.this, selected);
+            }
+         };
       mGroupCheckedChangeListener = new android.widget.RadioGroup.OnCheckedChangeListener()
-      {
-         @Override
-         public void onCheckedChanged(RadioGroup group, int checkedId)
          {
-            switch (checkedId)
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId)
             {
-               case R.id.layer_google_satellite:
-                  setSatelliteOverlay(true);
-                  break;
-               case R.id.layer_google_regular:
-                  setSatelliteOverlay(false);
-                  break;
-               case R.id.layer_osm_cloudmade:
-                  setOsmBaseOverlay(Constants.OSM_CLOUDMADE);
-                  break;
-               case R.id.layer_osm_maknik:
-                  setOsmBaseOverlay(Constants.OSM_MAKNIK);
-                  break;
-               case R.id.layer_osm_bicycle:
-                  setOsmBaseOverlay(Constants.OSM_CYCLE);
-                  break;
-               default:
-                  break;
+               switch (checkedId)
+               {
+                  case R.id.layer_google_satellite:
+                     setSatelliteOverlay(true);
+                     break;
+                  case R.id.layer_google_regular:
+                     setSatelliteOverlay(false);
+                     break;
+                  case R.id.layer_osm_cloudmade:
+                     setOsmBaseOverlay(Constants.OSM_CLOUDMADE);
+                     break;
+                  case R.id.layer_osm_maknik:
+                     setOsmBaseOverlay(Constants.OSM_MAKNIK);
+                     break;
+                  case R.id.layer_osm_bicycle:
+                     setOsmBaseOverlay(Constants.OSM_CYCLE);
+                     break;
+                  default:
+                     break;
+               }
             }
-         }
-      };
+         };
       mCheckedChangeListener = new OnCheckedChangeListener()
-      {
-         @Override
-         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
          {
-            int checkedId;
-            checkedId = buttonView.getId();
-            switch (checkedId)
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
             {
-               case R.id.layer_traffic:
-                  setTrafficOverlay(isChecked);
-                  break;
-               case R.id.layer_speed:
-                  setSpeedOverlay(isChecked);
-                  break;
-               case R.id.layer_altitude:
-                  setAltitudeOverlay(isChecked);
-                  break;
-               case R.id.layer_distance:
-                  setDistanceOverlay(isChecked);
-                  break;
-               case R.id.layer_compass:
-                  setCompassOverlay(isChecked);
-                  break;
-               case R.id.layer_location:
-                  setLocationOverlay(isChecked);
-                  break;
-               default:
-                  break;
+               int checkedId;
+               checkedId = buttonView.getId();
+               switch (checkedId)
+               {
+                  case R.id.layer_traffic:
+                     setTrafficOverlay(isChecked);
+                     break;
+                  case R.id.layer_speed:
+                     setSpeedOverlay(isChecked);
+                     break;
+                  case R.id.layer_altitude:
+                     setAltitudeOverlay(isChecked);
+                     break;
+                  case R.id.layer_distance:
+                     setDistanceOverlay(isChecked);
+                     break;
+                  case R.id.layer_compass:
+                     setCompassOverlay(isChecked);
+                     break;
+                  case R.id.layer_location:
+                     setLocationOverlay(isChecked);
+                     break;
+                  default:
+                     break;
+               }
             }
-         }
-      };
+         };
       mNoTrackDialogListener = new DialogInterface.OnClickListener()
-      {
-         @Override
-         public void onClick(DialogInterface dialog, int which)
          {
-            //            Log.d( TAG, "mNoTrackDialogListener" + which);
-            Intent tracklistIntent = new Intent(LoggerMap.this, TrackList.class);
-            tracklistIntent.putExtra(Tracks._ID, LoggerMap.this.mTrackId);
-            startActivityForResult(tracklistIntent, MENU_TRACKLIST);
-         }
-      };
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+               //            Log.d( TAG, "mNoTrackDialogListener" + which);
+               Intent tracklistIntent = new Intent(LoggerMap.this, TrackList.class);
+               tracklistIntent.putExtra(Tracks._ID, LoggerMap.this.mTrackId);
+               startActivityForResult(tracklistIntent, MENU_TRACKLIST);
+            }
+         };
       mOiAboutDialogListener = new DialogInterface.OnClickListener()
-      {
-         @Override
-         public void onClick(DialogInterface dialog, int which)
          {
-            Uri oiDownload = Uri.parse("market://details?id=org.openintents.about");
-            Intent oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
-            try
+            @Override
+            public void onClick(DialogInterface dialog, int which)
             {
-               startActivity(oiAboutIntent);
+               Uri oiDownload = Uri.parse("market://details?id=org.openintents.about");
+               Intent oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
+               try
+               {
+                  startActivity(oiAboutIntent);
+               }
+               catch (ActivityNotFoundException e)
+               {
+                  oiDownload = Uri.parse("http://openintents.googlecode.com/files/AboutApp-1.0.0.apk");
+                  oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
+                  startActivity(oiAboutIntent);
+               }
             }
-            catch (ActivityNotFoundException e)
-            {
-               oiDownload = Uri.parse("http://openintents.googlecode.com/files/AboutApp-1.0.0.apk");
-               oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
-               startActivity(oiAboutIntent);
-            }
-         }
-      };
+         };
       /**
        * Listeners to events outside this mapview
        */
       mSharedPreferenceChangeListener = new OnSharedPreferenceChangeListener()
-      {
-         @Override
-         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
          {
-            if (key.equals(Constants.TRACKCOLORING))
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
             {
-               mAverageSpeed = 0.0;
-               updateSpeedColoring();
-            }
-            else if (key.equals(Constants.DISABLEBLANKING) || key.equals(Constants.DISABLEDIMMING))
-            {
-               updateBlankingBehavior();
-            }
-            else if (key.equals(Constants.SPEED))
-            {
-               updateSpeedDisplayVisibility();
-            }
-            else if (key.equals(Constants.ALTITUDE))
-            {
-               updateAltitudeDisplayVisibility();
-            }
-            else if (key.equals(Constants.DISTANCE))
-            {
-               updateDistanceDisplayVisibility();
-            }
-            else if (key.equals(Constants.COMPASS))
-            {
-               updateCompassDisplayVisibility();
-            }
-            else if (key.equals(Constants.TRAFFIC))
-            {
-               updateGoogleOverlays();
-            }
-            else if (key.equals(Constants.SATELLITE))
-            {
-               updateGoogleOverlays();
-            }
-            else if (key.equals(Constants.LOCATION))
-            {
-               updateLocationDisplayVisibility();
-            }
-            else if (key.equals(Constants.MAPPROVIDER))
-            {
-               updateMapProvider();
-            }
-            else if (key.equals(Constants.OSMBASEOVERLAY))
-            {
-               updateOsmBaseOverlay();
-            }
-         }
-      };
-      mTrackMediasObserver = new ContentObserver(new Handler())
-      {
-         @Override
-         public void onChange(boolean selfUpdate)
-         {
-            if (!selfUpdate)
-            {
-               if (mLastSegmentOverlay != null)
+               if (key.equals(Constants.TRACKCOLORING))
                {
-                  mLastSegmentOverlay.calculateMedia();
-                  mMapView.postInvalidate();
+                  mAverageSpeed = 0.0;
+                  updateSpeedColoring();
+               }
+               else if (key.equals(Constants.DISABLEBLANKING) || key.equals(Constants.DISABLEDIMMING))
+               {
+                  updateBlankingBehavior();
+               }
+               else if (key.equals(Constants.SPEED))
+               {
+                  updateSpeedDisplayVisibility();
+               }
+               else if (key.equals(Constants.ALTITUDE))
+               {
+                  updateAltitudeDisplayVisibility();
+               }
+               else if (key.equals(Constants.DISTANCE))
+               {
+                  updateDistanceDisplayVisibility();
+               }
+               else if (key.equals(Constants.COMPASS))
+               {
+                  updateCompassDisplayVisibility();
+               }
+               else if (key.equals(Constants.TRAFFIC))
+               {
+                  updateGoogleOverlays();
+               }
+               else if (key.equals(Constants.SATELLITE))
+               {
+                  updateGoogleOverlays();
+               }
+               else if (key.equals(Constants.LOCATION))
+               {
+                  updateLocationDisplayVisibility();
+               }
+               else if (key.equals(Constants.MAPPROVIDER))
+               {
+                  updateMapProvider();
+               }
+               else if (key.equals(Constants.OSMBASEOVERLAY))
+               {
+                  updateOsmBaseOverlay();
                }
             }
-            else
-            {
-               Log.w(TAG, "mTrackMediasObserver skipping change on " + mLastSegment);
-            }
-         }
-      };
-      mTrackSegmentsObserver = new ContentObserver(new Handler())
-      {
-         @Override
-         public void onChange(boolean selfUpdate)
+         };
+      mTrackMediasObserver = new ContentObserver(new Handler())
          {
-            if (!selfUpdate)
+            @Override
+            public void onChange(boolean selfUpdate)
             {
-               LoggerMap.this.updateDataOverlays();
-            }
-            else
-            {
-               Log.w(TAG, "mTrackSegmentsObserver skipping change on " + mLastSegment);
-            }
-         }
-      };
-      mSegmentWaypointsObserver = new ContentObserver(new Handler())
-      {
-         @Override
-         public void onChange(boolean selfUpdate)
-         {
-            if (!selfUpdate)
-            {
-               LoggerMap.this.updateTrackNumbers();
-               if (mLastSegmentOverlay != null)
+               if (!selfUpdate)
                {
-                  moveActiveViewWindow();
-                  LoggerMap.this.updateMapProviderAdministration();
+                  if (mLastSegmentOverlay != null)
+                  {
+                     mLastSegmentOverlay.calculateMedia();
+                     mMapView.postInvalidate();
+                  }
                }
                else
                {
-                  Log.e(TAG, "Error the last segment changed but it is not on screen! " + mLastSegment);
+                  Log.w(TAG, "mTrackMediasObserver skipping change on " + mLastSegment);
                }
             }
-            else
-            {
-               Log.w(TAG, "mSegmentWaypointsObserver skipping change on " + mLastSegment);
-            }
-         }
-      };
-      mUnitsChangeListener = new UnitsI18n.UnitsChangeListener()
-      {
-         @Override
-         public void onUnitsChange()
+         };
+      mTrackSegmentsObserver = new ContentObserver(new Handler())
          {
-            mAverageSpeed = 0.0;
-            updateTrackNumbers();
-            updateSpeedColoring();
-         }
-      };
+            @Override
+            public void onChange(boolean selfUpdate)
+            {
+               if (!selfUpdate)
+               {
+                  LoggerMap.this.updateDataOverlays();
+               }
+               else
+               {
+                  Log.w(TAG, "mTrackSegmentsObserver skipping change on " + mLastSegment);
+               }
+            }
+         };
+      mSegmentWaypointsObserver = new ContentObserver(new Handler())
+         {
+            @Override
+            public void onChange(boolean selfUpdate)
+            {
+               if (!selfUpdate)
+               {
+                  LoggerMap.this.updateTrackNumbers();
+                  if (mLastSegmentOverlay != null)
+                  {
+                     moveActiveViewWindow();
+                     LoggerMap.this.updateMapProviderAdministration();
+                  }
+                  else
+                  {
+                     Log.e(TAG, "Error the last segment changed but it is not on screen! " + mLastSegment);
+                  }
+               }
+               else
+               {
+                  Log.w(TAG, "mSegmentWaypointsObserver skipping change on " + mLastSegment);
+               }
+            }
+         };
+      mUnitsChangeListener = new UnitsI18n.UnitsChangeListener()
+         {
+            @Override
+            public void onUnitsChange()
+            {
+               mAverageSpeed = 0.0;
+               updateTrackNumbers();
+               updateSpeedColoring();
+            }
+         };
    }
 
    @Override
@@ -876,7 +871,7 @@ public class LoggerMap extends MapActivity
                Uri screenStreamUri = ShareTrack.storeScreenBitmap(bm);
                intent.putExtra(Intent.EXTRA_STREAM, screenStreamUri);
             }
-            startActivityForResult(Intent.createChooser( intent, getString( R.string.share_track ) ), MENU_SHARE);
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.share_track)), MENU_SHARE);
             handled = true;
             break;
          case MENU_CONTRIB:
@@ -953,8 +948,7 @@ public class LoggerMap extends MapActivity
             view = factory.inflate(R.layout.contrib, null);
             TextView contribView = (TextView) view.findViewById(R.id.contrib_view);
             contribView.setText(R.string.dialog_contrib_message);
-            builder.setTitle(R.string.dialog_contrib_title).setView(view).setIcon(android.R.drawable.ic_dialog_email)
-                  .setPositiveButton(R.string.btn_okay, null);
+            builder.setTitle(R.string.dialog_contrib_title).setView(view).setIcon(android.R.drawable.ic_dialog_email).setPositiveButton(R.string.btn_okay, null);
             dialog = builder.create();
             return dialog;
          default:
@@ -1026,8 +1020,7 @@ public class LoggerMap extends MapActivity
 
    /*
     * (non-Javadoc)
-    * @see android.app.Activity#onActivityResult(int, int,
-    * android.content.Intent)
+    * @see android.app.Activity#onActivityResult(int, int, android.content.Intent)
     */
    @Override
    protected void onActivityResult(int requestCode, int resultCode, Intent intent)
@@ -1153,11 +1146,11 @@ public class LoggerMap extends MapActivity
    {
       if (findViewById(R.id.myMapView).getVisibility() == View.VISIBLE)
       {
-         mLoggerServiceManager.storeDerivedDataSource(GOOGLE_PROVIDER);
+         mLoggerServiceManager.storeDerivedDataSource(Constants.GOOGLE_PROVIDER);
       }
       if (findViewById(R.id.myOsmMapView).getVisibility() == View.VISIBLE)
       {
-         mLoggerServiceManager.storeDerivedDataSource(OSM_PROVIDER);
+         mLoggerServiceManager.storeDerivedDataSource(Constants.OSM_PROVIDER);
 
       }
    }
@@ -1171,7 +1164,7 @@ public class LoggerMap extends MapActivity
          if (mWakeLock == null)
          {
             PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
-            if( disabledimming )
+            if (disabledimming)
             {
                mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, TAG);
             }
@@ -1255,7 +1248,7 @@ public class LoggerMap extends MapActivity
          mLastGPSAltitudeView.setVisibility(View.GONE);
       }
    }
-   
+
    private void updateDistanceDisplayVisibility()
    {
       boolean showdistance = mSharedPreferences.getBoolean(Constants.DISTANCE, false);
@@ -1268,7 +1261,7 @@ public class LoggerMap extends MapActivity
          mDistanceView.setVisibility(View.GONE);
       }
    }
-   
+
    private void updateCompassDisplayVisibility()
    {
       boolean compass = mSharedPreferences.getBoolean(Constants.COMPASS, false);
@@ -1296,9 +1289,7 @@ public class LoggerMap extends MapActivity
    }
 
    /**
-    * Retrieves the numbers of the measured speed and altitude from the most
-    * recent waypoint and updates UI components with this latest bit of
-    * information.
+    * Retrieves the numbers of the measured speed and altitude from the most recent waypoint and updates UI components with this latest bit of information.
     */
    private void updateTrackNumbers()
    {
@@ -1325,17 +1316,16 @@ public class LoggerMap extends MapActivity
          altitude = units.conversionFromMeterToHeight(altitude);
          String altitudeText = String.format("%.0f %s", altitude, units.getHeightUnit());
          mLastGPSAltitudeView.setText(altitudeText);
-         
+
          //Distance number
-         double distance = units.conversionFromMeter( mLoggerServiceManager.getTrackedDistance() );
+         double distance = units.conversionFromMeter(mLoggerServiceManager.getTrackedDistance());
          String distanceText = String.format("%.2f %s", distance, units.getDistanceUnit());
          mDistanceView.setText(distanceText);
       }
    }
 
    /**
-    * For the current track identifier the route of that track is drawn by
-    * adding a OverLay for each segments in the track
+    * For the current track identifier the route of that track is drawn by adding a OverLay for each segments in the track
     * 
     * @param trackId
     * @see SegmentOverlay
@@ -1471,9 +1461,9 @@ public class LoggerMap extends MapActivity
          {
             mSpeedtexts[i].setVisibility(View.VISIBLE);
             double speed;
-            if( mUnits.isUnitFlipped() )
+            if (mUnits.isUnitFlipped())
             {
-               speed = ((avgSpeed * 2d) / 5d) * (mSpeedtexts.length - i - 1) ;
+               speed = ((avgSpeed * 2d) / 5d) * (mSpeedtexts.length - i - 1);
             }
             else
             {
@@ -1532,8 +1522,7 @@ public class LoggerMap extends MapActivity
    }
 
    /**
-    * Get the last know position from the GPS provider and return that
-    * information wrapped in a GeoPoint to which the Map can navigate.
+    * Get the last know position from the GPS provider and return that information wrapped in a GeoPoint to which the Map can navigate.
     * 
     * @see GeoPoint
     * @return
@@ -1591,8 +1580,8 @@ public class LoggerMap extends MapActivity
          try
          {
             ContentResolver resolver = this.getContentResolver();
-            waypoint = resolver.query(Uri.withAppendedPath(Tracks.CONTENT_URI, mTrackId + "/waypoints"), new String[] { Waypoints.LATITUDE,
-                  Waypoints.LONGITUDE, "max(" + Waypoints.TABLE + "." + Waypoints._ID + ")" }, null, null, null);
+            waypoint = resolver.query(Uri.withAppendedPath(Tracks.CONTENT_URI, mTrackId + "/waypoints"), new String[] { Waypoints.LATITUDE, Waypoints.LONGITUDE,
+                  "max(" + Waypoints.TABLE + "." + Waypoints._ID + ")" }, null, null, null);
             if (waypoint != null && waypoint.moveToLast())
             {
                int microLatitude = (int) (waypoint.getDouble(0) * 1E6d);
@@ -1642,8 +1631,7 @@ public class LoggerMap extends MapActivity
    }
 
    /**
-    * Enables a SegmentOverlay to call back to the MapActivity to show a dialog
-    * with choices of media
+    * Enables a SegmentOverlay to call back to the MapActivity to show a dialog with choices of media
     * 
     * @param mediaAdapter
     */

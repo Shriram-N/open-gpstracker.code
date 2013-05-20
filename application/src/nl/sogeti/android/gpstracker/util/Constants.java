@@ -44,6 +44,9 @@ import android.preference.PreferenceManager;
  */
 public class Constants
 {
+   public static final String OSM_PROVIDER = "OSM";
+   public static final String GOOGLE_PROVIDER = "GOOGLE";
+
    public static final String DISABLEBLANKING = "disableblanking";
    public static final String DISABLEDIMMING = "disabledimming";
    public static final String SATELLITE = "SATELLITE";
