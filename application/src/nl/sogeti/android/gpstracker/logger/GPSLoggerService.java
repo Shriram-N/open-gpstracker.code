@@ -93,30 +93,28 @@ import android.widget.Toast;
 public class GPSLoggerService extends Service implements LocationListener
 {
    private static final float FINE_DISTANCE = 5F;
-   private static final long  FINE_INTERVAL = 1000l;
+   private static final long FINE_INTERVAL = 1000l;
    private static final float FINE_ACCURACY = 20f;
-   
+
    private static final float NORMAL_DISTANCE = 10F;
-   private static final long  NORMAL_INTERVAL = 15000l;
+   private static final long NORMAL_INTERVAL = 15000l;
    private static final float NORMAL_ACCURACY = 30f;
 
    private static final float COARSE_DISTANCE = 25F;
-   private static final long  COARSE_INTERVAL = 30000l;
+   private static final long COARSE_INTERVAL = 30000l;
    private static final float COARSE_ACCURACY = 75f;
-   
+
    private static final float GLOBAL_DISTANCE = 500F;
-   private static final long  GLOBAL_INTERVAL = 300000l;
+   private static final long GLOBAL_INTERVAL = 300000l;
    private static final float GLOBAL_ACCURACY = 1000f;
 
    /**
-    * <code>MAX_REASONABLE_SPEED</code> is about 324 kilometer per hour or 201
-    * mile per hour.
+    * <code>MAX_REASONABLE_SPEED</code> is about 324 kilometer per hour or 201 mile per hour.
     */
    private static final int MAX_REASONABLE_SPEED = 90;
 
    /**
-    * <code>MAX_REASONABLE_ALTITUDECHANGE</code> between the last few waypoints
-    * and a new one the difference should be less then 200 meter.
+    * <code>MAX_REASONABLE_ALTITUDECHANGE</code> between the last few waypoints and a new one the difference should be less then 200 meter.
     */
    private static final int MAX_REASONABLE_ALTITUDECHANGE = 200;
 
@@ -184,8 +182,7 @@ public class GPSLoggerService extends Service implements LocationListener
    private Queue<Double> mAltitudes;
 
    /**
-    * <code>mAcceptableAccuracy</code> indicates the maximum acceptable accuracy
-    * of a waypoint in meters.
+    * <code>mAcceptableAccuracy</code> indicates the maximum acceptable accuracy of a waypoint in meters.
     */
    private float mMaxAcceptableAccuracy = 20;
    private int mSatellites = 0;
@@ -198,8 +195,7 @@ public class GPSLoggerService extends Service implements LocationListener
    private boolean mStatusMonitor;
 
    /**
-    * Time thread to runs tasks that check whether the GPS listener has received
-    * enough to consider the GPS system alive.
+    * Time thread to runs tasks that check whether the GPS listener has received enough to consider the GPS system alive.
     */
    private Timer mHeartbeatTimer;
 
@@ -207,44 +203,43 @@ public class GPSLoggerService extends Service implements LocationListener
     * Listens to changes in preference to precision and sanity checks
     */
    private OnSharedPreferenceChangeListener mSharedPreferenceChangeListener = new OnSharedPreferenceChangeListener()
-   {
-
-      @Override
-      public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
       {
-         if (key.equals(Constants.PRECISION) || key.equals(Constants.LOGGING_DISTANCE) || key.equals(Constants.LOGGING_INTERVAL))
-         {
-            sendRequestLocationUpdatesMessage();
-            crashProtectState();
-            updateNotification();
-            broadCastLoggingState();
-         }
-         else if (key.equals(Constants.SPEEDSANITYCHECK))
-         {
-            mSpeedSanityCheck = sharedPreferences.getBoolean(Constants.SPEEDSANITYCHECK, true);
-         }
-         else if (key.equals(Constants.STATUS_MONITOR))
-         {
-            mLocationManager.removeGpsStatusListener(mStatusListener);
-            sendRequestStatusUpdateMessage();
-            updateNotification();
-         }
-         else if(key.equals(Constants.BROADCAST_STREAM) || key.equals("VOICEOVER_ENABLED") || key.equals("CUSTOMUPLOAD_ENABLED") )
-         {
-            if (key.equals(Constants.BROADCAST_STREAM))
-            {
-               mStreamBroadcast = sharedPreferences.getBoolean(Constants.BROADCAST_STREAM, false);
-            }
-            StreamUtils.shutdownStreams(GPSLoggerService.this);
-            if( !mStreamBroadcast )
-            {
-               StreamUtils.initStreams(GPSLoggerService.this);
-            }
-         }
-      }
-   };
 
-   
+         @Override
+         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+         {
+            if (key.equals(Constants.PRECISION) || key.equals(Constants.LOGGING_DISTANCE) || key.equals(Constants.LOGGING_INTERVAL))
+            {
+               sendRequestLocationUpdatesMessage();
+               crashProtectState();
+               updateNotification();
+               broadCastLoggingState();
+            }
+            else if (key.equals(Constants.SPEEDSANITYCHECK))
+            {
+               mSpeedSanityCheck = sharedPreferences.getBoolean(Constants.SPEEDSANITYCHECK, true);
+            }
+            else if (key.equals(Constants.STATUS_MONITOR))
+            {
+               mLocationManager.removeGpsStatusListener(mStatusListener);
+               sendRequestStatusUpdateMessage();
+               updateNotification();
+            }
+            else if (key.equals(Constants.BROADCAST_STREAM) || key.equals("VOICEOVER_ENABLED") || key.equals("CUSTOMUPLOAD_ENABLED"))
+            {
+               if (key.equals(Constants.BROADCAST_STREAM))
+               {
+                  mStreamBroadcast = sharedPreferences.getBoolean(Constants.BROADCAST_STREAM, false);
+               }
+               StreamUtils.shutdownStreams(GPSLoggerService.this);
+               if (!mStreamBroadcast)
+               {
+                  StreamUtils.initStreams(GPSLoggerService.this);
+               }
+            }
+         }
+      };
+
    @Override
    public void onLocationChanged(Location location)
    {
@@ -270,7 +265,7 @@ public class GPSLoggerService extends Service implements LocationListener
                startNewSegment();
             }
          }
-         else if( mPreviousLocation != null )
+         else if (mPreviousLocation != null)
          {
             mDistance += mPreviousLocation.distanceTo(filteredLocation);
          }
@@ -279,6 +274,7 @@ public class GPSLoggerService extends Service implements LocationListener
          mPreviousLocation = location;
       }
    }
+
    @Override
    public void onProviderDisabled(String provider)
    {
@@ -335,106 +331,105 @@ public class GPSLoggerService extends Service implements LocationListener
     * Listens to GPS status changes
     */
    private Listener mStatusListener = new GpsStatus.Listener()
-   {
-      @Override
-      public synchronized void onGpsStatusChanged(int event)
       {
-         switch (event)
+         @Override
+         public synchronized void onGpsStatusChanged(int event)
          {
-            case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-               if (mStatusMonitor)
-               {
-                  GpsStatus status = mLocationManager.getGpsStatus(null);
-                  mSatellites = 0;
-                  Iterable<GpsSatellite> list = status.getSatellites();
-                  for (GpsSatellite satellite : list)
+            switch (event)
+            {
+               case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+                  if (mStatusMonitor)
                   {
-                     if (satellite.usedInFix())
+                     GpsStatus status = mLocationManager.getGpsStatus(null);
+                     mSatellites = 0;
+                     Iterable<GpsSatellite> list = status.getSatellites();
+                     for (GpsSatellite satellite : list)
                      {
-                        mSatellites++;
+                        if (satellite.usedInFix())
+                        {
+                           mSatellites++;
+                        }
                      }
+                     updateNotification();
                   }
-                  updateNotification();
-               }
-               break;
-            case GpsStatus.GPS_EVENT_STOPPED:
-               break;
-            case GpsStatus.GPS_EVENT_STARTED:
-               break;
-            default:
-               break;
+                  break;
+               case GpsStatus.GPS_EVENT_STOPPED:
+                  break;
+               case GpsStatus.GPS_EVENT_STARTED:
+                  break;
+               default:
+                  break;
+            }
          }
-      }
-   };
+      };
    private IBinder mBinder = new IGPSLoggerServiceRemote.Stub()
-   {
-      @Override
-      public int loggingState() throws RemoteException
       {
-         return mLoggingState;
-      }
+         @Override
+         public int loggingState() throws RemoteException
+         {
+            return mLoggingState;
+         }
 
-      @Override
-      public long startLogging() throws RemoteException
-      {
-         GPSLoggerService.this.startLogging();
-         return mTrackId;
-      }
+         @Override
+         public long startLogging() throws RemoteException
+         {
+            GPSLoggerService.this.startLogging();
+            return mTrackId;
+         }
 
-      @Override
-      public void pauseLogging() throws RemoteException
-      {
-         GPSLoggerService.this.pauseLogging();
-      }
+         @Override
+         public void pauseLogging() throws RemoteException
+         {
+            GPSLoggerService.this.pauseLogging();
+         }
 
-      @Override
-      public long resumeLogging() throws RemoteException
-      {
-         GPSLoggerService.this.resumeLogging();
-         return mSegmentId;
-      }
+         @Override
+         public long resumeLogging() throws RemoteException
+         {
+            GPSLoggerService.this.resumeLogging();
+            return mSegmentId;
+         }
 
-      @Override
-      public void stopLogging() throws RemoteException
-      {
-         GPSLoggerService.this.stopLogging();
-      }
+         @Override
+         public void stopLogging() throws RemoteException
+         {
+            GPSLoggerService.this.stopLogging();
+         }
 
-      @Override
-      public Uri storeMediaUri(Uri mediaUri) throws RemoteException
-      {
-         GPSLoggerService.this.storeMediaUri(mediaUri);
-         return null;
-      }
+         @Override
+         public Uri storeMediaUri(Uri mediaUri) throws RemoteException
+         {
+            GPSLoggerService.this.storeMediaUri(mediaUri);
+            return null;
+         }
 
-      @Override
-      public boolean isMediaPrepared() throws RemoteException
-      {
-         return GPSLoggerService.this.isMediaPrepared();
-      }
+         @Override
+         public boolean isMediaPrepared() throws RemoteException
+         {
+            return GPSLoggerService.this.isMediaPrepared();
+         }
 
-      @Override
-      public void storeDerivedDataSource(String sourceName) throws RemoteException
-      {
-         GPSLoggerService.this.storeDerivedDataSource(sourceName);
-      }
+         @Override
+         public void storeDerivedDataSource(String sourceName) throws RemoteException
+         {
+            GPSLoggerService.this.storeDerivedDataSource(sourceName);
+         }
 
-      @Override
-      public Location getLastWaypoint() throws RemoteException
-      {
-         return GPSLoggerService.this.getLastWaypoint();
-      }
-      
-      @Override
-      public float getTrackedDistance() throws RemoteException
-      {
-         return GPSLoggerService.this.getTrackedDistance();
-      }
-   };
+         @Override
+         public Location getLastWaypoint() throws RemoteException
+         {
+            return GPSLoggerService.this.getLastWaypoint();
+         }
+
+         @Override
+         public float getTrackedDistance() throws RemoteException
+         {
+            return GPSLoggerService.this.getTrackedDistance();
+         }
+      };
 
    /**
-    * Task that will be run periodically during active logging to verify that
-    * the logging really happens and that the GPS hasn't silently stopped.
+    * Task that will be run periodically during active logging to verify that the logging really happens and that the GPS hasn't silently stopped.
     */
    private TimerTask mHeartbeat = null;
 
@@ -500,9 +495,7 @@ public class GPSLoggerService extends Service implements LocationListener
    };
 
    /**
-    * Number of milliseconds that a functioning GPS system needs to provide a
-    * location. Calculated to be either 120 seconds or 4 times the requested
-    * period, whichever is larger.
+    * Number of milliseconds that a functioning GPS system needs to provide a location. Calculated to be either 120 seconds or 4 times the requested period, whichever is larger.
     */
    private long mCheckPeriod;
 
@@ -524,21 +517,20 @@ public class GPSLoggerService extends Service implements LocationListener
       {
          Looper.prepare();
          mHandler = new Handler()
-         {
-            @Override
-            public void handleMessage(Message msg)
             {
-               _handleMessage(msg);
-            }
-         };
+               @Override
+               public void handleMessage(Message msg)
+               {
+                  _handleMessage(msg);
+               }
+            };
          ready.release(); // Signal the looper and handler are created 
          Looper.loop();
       }
    }
 
    /**
-    * Called by the system when the service is first created. Do not call this
-    * method directly. Be sure to call super.onCreate().
+    * Called by the system when the service is first created. Do not call this method directly. Be sure to call super.onCreate().
     */
    @Override
    public void onCreate()
@@ -592,9 +584,7 @@ public class GPSLoggerService extends Service implements LocationListener
    /**
     * This is the old onStart method that will be called on the pre-2.0
     * 
-    * @see android.app.Service#onStart(android.content.Intent, int) platform. On
-    *      2.0 or later we override onStartCommand() so this method will not be
-    *      called.
+    * @see android.app.Service#onStart(android.content.Intent, int) platform. On 2.0 or later we override onStartCommand() so this method will not be called.
     */
    @Override
    public void onStart(Intent intent, int startId)
@@ -741,8 +731,7 @@ public class GPSLoggerService extends Service implements LocationListener
    }
 
    /**
-    * Provides the cached last stored waypoint it current logging is active alse
-    * null.
+    * Provides the cached last stored waypoint it current logging is active alse null.
     * 
     * @return last waypoint location or null
     */
@@ -755,7 +744,7 @@ public class GPSLoggerService extends Service implements LocationListener
       }
       return myLastWaypoint;
    }
-   
+
    public float getTrackedDistance()
    {
       float distance = 0F;
@@ -909,8 +898,7 @@ public class GPSLoggerService extends Service implements LocationListener
             String source = null;
             try
             {
-               metaData = this.getContentResolver().query(trackMetaDataUri, new String[] { MetaData.VALUE }, MetaData.KEY + " = ? ",
-                     new String[] { Constants.DATASOURCES_KEY }, null);
+               metaData = this.getContentResolver().query(trackMetaDataUri, new String[] { MetaData.VALUE }, MetaData.KEY + " = ? ", new String[] { Constants.DATASOURCES_KEY }, null);
                if (metaData.moveToFirst())
                {
                   source = metaData.getString(0);
@@ -1064,7 +1052,7 @@ public class GPSLoggerService extends Service implements LocationListener
       broadcast.putExtra(Constants.EXTRA_LOGGING_PRECISION, mPrecision);
       broadcast.putExtra(Constants.EXTRA_LOGGING_STATE, mLoggingState);
       this.getApplicationContext().sendBroadcast(broadcast);
-      if( isLogging()  )
+      if (isLogging())
       {
          StreamUtils.initStreams(this);
       }
@@ -1116,8 +1104,7 @@ public class GPSLoggerService extends Service implements LocationListener
    }
 
    /**
-    * Message handler method to do the work off-loaded by mHandler to
-    * GPSLoggerServiceThread
+    * Message handler method to do the work off-loaded by mHandler to GPSLoggerServiceThread
     * 
     * @param msg
     */
@@ -1218,8 +1205,7 @@ public class GPSLoggerService extends Service implements LocationListener
    }
 
    /**
-    * Some GPS waypoints received are of to low a quality for tracking use. Here
-    * we filter those out.
+    * Some GPS waypoints received are of to low a quality for tracking use. Here we filter those out.
     * 
     * @param proposedLocation
     * @return either the (cleaned) original or null when unacceptable
@@ -1236,8 +1222,7 @@ public class GPSLoggerService extends Service implements LocationListener
       // Do not log a waypoint which is more inaccurate then is configured to be acceptable
       if (proposedLocation != null && proposedLocation.getAccuracy() > mMaxAcceptableAccuracy)
       {
-         Log.w(TAG, String.format("A weak location was received, lots of inaccuracy... (%f is more then max %f)", proposedLocation.getAccuracy(),
-               mMaxAcceptableAccuracy));
+         Log.w(TAG, String.format("A weak location was received, lots of inaccuracy... (%f is more then max %f)", proposedLocation.getAccuracy(), mMaxAcceptableAccuracy));
          proposedLocation = addBadLocation(proposedLocation);
       }
 
@@ -1245,8 +1230,8 @@ public class GPSLoggerService extends Service implements LocationListener
       if (proposedLocation != null && mPreviousLocation != null && proposedLocation.getAccuracy() > mPreviousLocation.distanceTo(proposedLocation))
       {
          Log.w(TAG,
-               String.format("A weak location was received, not quite clear from the previous waypoint... (%f more then max %f)",
-                     proposedLocation.getAccuracy(), mPreviousLocation.distanceTo(proposedLocation)));
+               String.format("A weak location was received, not quite clear from the previous waypoint... (%f more then max %f)", proposedLocation.getAccuracy(),
+                     mPreviousLocation.distanceTo(proposedLocation)));
          proposedLocation = addBadLocation(proposedLocation);
       }
 
@@ -1300,12 +1285,10 @@ public class GPSLoggerService extends Service implements LocationListener
    }
 
    /**
-    * Store a bad location, when to many bad locations are stored the the
-    * storage is cleared and the least bad one is returned
+    * Store a bad location, when to many bad locations are stored the the storage is cleared and the least bad one is returned
     * 
     * @param location bad location
-    * @return null when the bad location is stored or the least bad one if the
-    *         storage was full
+    * @return null when the bad location is stored or the least bad one if the storage was full
     */
    private Location addBadLocation(Location location)
    {
@@ -1341,8 +1324,7 @@ public class GPSLoggerService extends Service implements LocationListener
    }
 
    /**
-    * Builds a bit of knowledge about altitudes to expect and return if the
-    * added value is deemed sane.
+    * Builds a bit of knowledge about altitudes to expect and return if the added value is deemed sane.
     * 
     * @param altitude
     * @return whether the altitude is considered sane
@@ -1454,7 +1436,7 @@ public class GPSLoggerService extends Service implements LocationListener
       if (mStreamBroadcast)
       {
          final long minDistance = (long) PreferenceManager.getDefaultSharedPreferences(this).getFloat("streambroadcast_distance_meter", 5000F);
-         final long minTime = 60000 * Long.parseLong(PreferenceManager.getDefaultSharedPreferences(this).getString("streambroadcast_time", "1"));
+         final long minTime = 60000 * parseLong(PreferenceManager.getDefaultSharedPreferences(this).getString("streambroadcast_time", "1"), 60000);
          final long nowTime = location.getTime();
          if (mPreviousLocation != null)
          {
@@ -1466,7 +1448,7 @@ public class GPSLoggerService extends Service implements LocationListener
          }
          long passedTime = (nowTime - mLastTimeBroadcast);
          intent.putExtra(Constants.EXTRA_DISTANCE, (int) mBroadcastDistance);
-         intent.putExtra(Constants.EXTRA_TIME, (int) passedTime/60000);
+         intent.putExtra(Constants.EXTRA_TIME, (int) passedTime / 60000);
          intent.putExtra(Constants.EXTRA_LOCATION, location);
          intent.putExtra(Constants.EXTRA_TRACK, ContentUris.withAppendedId(Tracks.CONTENT_URI, mTrackId));
 
@@ -1485,6 +1467,20 @@ public class GPSLoggerService extends Service implements LocationListener
             this.sendBroadcast(intent, "android.permission.ACCESS_FINE_LOCATION");
          }
       }
+   }
+
+   private long parseLong(String string, long i)
+   {
+      long parsed = i;
+      try
+      {
+         parsed = Long.parseLong(string);
+      }
+      catch (NumberFormatException e)
+      {
+         Log.w(TAG, "Failed to parse value");
+      }
+      return parsed;
    }
 
    private boolean isNetworkConnected()
