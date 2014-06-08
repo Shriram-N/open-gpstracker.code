@@ -345,9 +345,18 @@ public class LoggerMap extends MapActivity
       }
       else if (data != null) // 2nd method: track ordered to make
       {
-         long loadTrackId = Long.parseLong(data.getLastPathSegment());
-         mAverageSpeed = 0.0;
-         moveToTrack(loadTrackId, true);
+         String lastPathSegment = data.getLastPathSegment();
+         try
+         {
+            long loadTrackId = Long.parseLong(lastPathSegment);
+            mAverageSpeed = 0.0;
+            moveToTrack(loadTrackId, true);
+         }
+         catch (NumberFormatException e)
+         {
+            Log.w(TAG, "lastPathSegment is not a id ");
+            moveToLastTrack();
+         }
       }
       else
       // 3rd method: just try the last track
