@@ -162,10 +162,13 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             {
                if (mShareTypeSpinner.getSelectedItemPosition() == EXPORT_TYPE_GPX && position == EXPORT_TARGET_BREADCRUMBS)
                {
-                  boolean authorized = mService.isAuthorized();
-                  if (!authorized)
+                  if (mService != null)
                   {
-                     showDialog(DIALOG_CONNECTBREADCRUMBS);
+                     boolean authorized = mService.isAuthorized();
+                     if (!authorized)
+                     {
+                        showDialog(DIALOG_CONNECTBREADCRUMBS);
+                     }
                   }
                }
                else if (mShareTypeSpinner.getSelectedItemPosition() == EXPORT_TYPE_TEXTLINE && position != EXPORT_TARGET_SMS)
@@ -276,7 +279,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
       }
       super.onDestroy();
    }
-   
+
    /**
     * @see android.app.Activity#onCreateDialog(int)
     */
@@ -748,35 +751,35 @@ public class ShareTrack extends Activity implements StatisticsDelegate
       };
 
    private OnClickListener mBreadcrumbsDialogListener = new OnClickListener()
-   {
-      @Override
-      public void onClick(DialogInterface dialog, int which)
       {
-         mService.collectBreadcrumbsOauthToken();
-      }
-   };
+         @Override
+         public void onClick(DialogInterface dialog, int which)
+         {
+            mService.collectBreadcrumbsOauthToken();
+         }
+      };
 
    public class ShareProgressListener implements ProgressListener
    {
       private String mFileName;
       private int mProgress;
-   
+
       public ShareProgressListener(String sharename)
       {
          mFileName = sharename;
       }
-   
+
       public void startNotification()
       {
          String ns = Context.NOTIFICATION_SERVICE;
          mNotificationManager = (NotificationManager) ShareTrack.this.getSystemService(ns);
          int icon = android.R.drawable.ic_menu_save;
          CharSequence tickerText = getString(R.string.ticker_saving) + "\"" + mFileName + "\"";
-   
+
          mNotification = new Notification();
          PendingIntent contentIntent = PendingIntent.getActivity(ShareTrack.this, 0, new Intent(ShareTrack.this, LoggerMap.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                PendingIntent.FLAG_UPDATE_CURRENT);
-   
+
          mNotification.contentIntent = contentIntent;
          mNotification.tickerText = tickerText;
          mNotification.icon = icon;
@@ -784,10 +787,10 @@ public class ShareTrack extends Activity implements StatisticsDelegate
          mContentView = new RemoteViews(getPackageName(), R.layout.savenotificationprogress);
          mContentView.setImageViewResource(R.id.icon, icon);
          mContentView.setTextViewText(R.id.progresstext, tickerText);
-   
+
          mNotification.contentView = mContentView;
       }
-   
+
       private void updateNotification()
       {
          //         Log.d( "TAG", "Progress " + progress + " of " + goal );
@@ -811,42 +814,42 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             mNotificationManager.notify(R.layout.savenotificationprogress, mNotification);
          }
       }
-   
+
       public void endNotification(Uri file)
       {
          mNotificationManager.cancel(R.layout.savenotificationprogress);
       }
-   
+
       @Override
       public void setIndeterminate(boolean indeterminate)
       {
          Log.w(TAG, "Unsupported indeterminate progress display");
       }
-   
+
       @Override
       public void started()
       {
          startNotification();
       }
-   
+
       @Override
       public void setProgress(int value)
       {
          mProgress = value;
          updateNotification();
       }
-   
+
       @Override
       public void finished(Uri result)
       {
          endNotification(result);
       }
-   
+
       @Override
       public void showError(String task, String errorDialogMessage, Exception errorDialogException)
       {
          endNotification(null);
-   
+
          mErrorDialogMessage = errorDialogMessage;
          mErrorDialogException = errorDialogException;
          if (!isFinishing())
@@ -859,6 +862,6 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             toast.show();
          }
       }
-   
+
    }
 }
