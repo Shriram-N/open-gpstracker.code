@@ -321,7 +321,14 @@ public class LoggerMap extends MapActivity
       Uri data = newIntent.getData();
       if (data != null)
       {
-         moveToTrack(Long.parseLong(data.getLastPathSegment()), true);
+         try
+         {
+            moveToTrack(Long.parseLong(data.getLastPathSegment()), true);
+         }
+         catch (NumberFormatException e)
+         {
+            Log.w(TAG, "LastPathSegment not an id");
+         }
       }
    }
 
