@@ -43,7 +43,6 @@
     <string name="layer_distance">Расстояние</string>
     <string name="layer_compass">Компас</string>
     <string name="layer_location">Мое Положение</string>
-    <string name="layer_cloudmade">Карты CloudMade</string>
     <string name="layer_maknik">Mapnik</string>
     <string name="layer_bicycle">OpenCycleMap</string>
     <string name="dialog_vacuum_title">Сжать данные</string>

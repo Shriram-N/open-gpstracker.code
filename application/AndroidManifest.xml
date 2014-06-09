@@ -69,9 +69,6 @@
         <meta-data
             android:name="android.app.default_searchable"
             android:value=".viewer.TrackList" />
-        <meta-data
-            android:name="CLOUDMADE_KEY"
-            android:value="534dfce474894e218f363a5473248ff6" />
 
         <activity
             android:name=".viewer.LoggerMap"

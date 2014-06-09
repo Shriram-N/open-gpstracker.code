@@ -45,9 +45,6 @@ import nl.sogeti.android.gpstracker.util.Constants;
 import nl.sogeti.android.gpstracker.util.UnitsI18n;
 import nl.sogeti.android.gpstracker.viewer.proxy.MapViewProxy;
 import nl.sogeti.android.gpstracker.viewer.proxy.MyLocationOverlayProxy;
-
-import org.osmdroid.tileprovider.util.CloudmadeUtil;
-
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
@@ -574,9 +571,6 @@ public class LoggerMap extends MapActivity
                   case R.id.layer_google_regular:
                      setSatelliteOverlay(false);
                      break;
-                  case R.id.layer_osm_cloudmade:
-                     setOsmBaseOverlay(Constants.OSM_CLOUDMADE);
-                     break;
                   case R.id.layer_osm_maknik:
                      setOsmBaseOverlay(Constants.OSM_MAKNIK);
                      break;
@@ -977,7 +971,6 @@ public class LoggerMap extends MapActivity
    {
       RadioButton satellite;
       RadioButton regular;
-      RadioButton cloudmade;
       RadioButton mapnik;
       RadioButton cycle;
       switch (id)
@@ -989,10 +982,8 @@ public class LoggerMap extends MapActivity
             regular.setChecked(!mSharedPreferences.getBoolean(Constants.SATELLITE, false));
 
             int osmbase = mSharedPreferences.getInt(Constants.OSMBASEOVERLAY, 0);
-            cloudmade = (RadioButton) dialog.findViewById(R.id.layer_osm_cloudmade);
             mapnik = (RadioButton) dialog.findViewById(R.id.layer_osm_maknik);
             cycle = (RadioButton) dialog.findViewById(R.id.layer_osm_bicycle);
-            cloudmade.setChecked(osmbase == Constants.OSM_CLOUDMADE);
             mapnik.setChecked(osmbase == Constants.OSM_MAKNIK);
             cycle.setChecked(osmbase == Constants.OSM_CYCLE);
 
@@ -1130,7 +1121,6 @@ public class LoggerMap extends MapActivity
             updateGoogleOverlays();
             break;
          case Constants.OSM:
-            CloudmadeUtil.retrieveCloudmadeKey(this);
             findViewById(R.id.myMapView).setVisibility(View.GONE);
             findViewById(R.id.myOsmMapView).setVisibility(View.VISIBLE);
             mMapView.setMap(findViewById(R.id.myOsmMapView));

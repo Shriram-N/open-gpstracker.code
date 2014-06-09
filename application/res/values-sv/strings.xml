@@ -43,7 +43,6 @@
     <string name="layer_distance">Avstånd</string>
     <string name="layer_compass">Kompass</string>
     <string name="layer_location">Min position</string>
-    <string name="layer_cloudmade">CloudMade maps</string>
     <string name="layer_maknik">Mapnik</string>
     <string name="layer_bicycle">OpenCycleMap</string>
     <string name="dialog_vacuum_title">Beskär data</string>
