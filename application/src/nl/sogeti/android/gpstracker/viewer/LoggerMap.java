@@ -42,6 +42,7 @@ import nl.sogeti.android.gpstracker.db.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.db.GPStracking.Waypoints;
 import nl.sogeti.android.gpstracker.logger.GPSLoggerServiceManager;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.DriveBackup;
 import nl.sogeti.android.gpstracker.util.UnitsI18n;
 import nl.sogeti.android.gpstracker.viewer.proxy.MapViewProxy;
 import nl.sogeti.android.gpstracker.viewer.proxy.MyLocationOverlayProxy;
@@ -87,6 +88,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Drive;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 
@@ -122,6 +125,7 @@ public class LoggerMap extends MapActivity
    private static final int DIALOG_CONTRIB = 35;
    private static final int DIALOG_DRIVE = 36;
    private static final String TAG = "OGT.LoggerMap";
+   public static int RESOLVE_CONNECTION_REQUEST_CODE = DIALOG_DRIVE;
    // UI's
    private CheckBox mTraffic;
    private CheckBox mSpeed;
@@ -166,6 +170,7 @@ public class LoggerMap extends MapActivity
     */
    private Runnable mServiceConnected;
    private Runnable speedCalculator;
+   private GoogleApiClient googleApiClient;
 
    /**
     * Called when the activity is first created.
@@ -307,6 +312,10 @@ public class LoggerMap extends MapActivity
          Log.w(TAG, "onDestroy(): Released lock to keep screen on!");
       }
       mUnits = null;
+      if (googleApiClient != null)
+      {
+         googleApiClient.disconnect();
+      }
    }
 
    /*
@@ -439,12 +448,333 @@ public class LoggerMap extends MapActivity
       return propagate;
    }
 
+   @Override
+   public boolean onCreateOptionsMenu(Menu menu)
+   {
+      boolean result = super.onCreateOptionsMenu(menu);
+
+      menu.add(ContextMenu.NONE, MENU_TRACKING, ContextMenu.NONE, R.string.menu_tracking).setIcon(R.drawable.ic_menu_movie).setAlphabeticShortcut('T');
+      menu.add(ContextMenu.NONE, MENU_LAYERS, ContextMenu.NONE, R.string.menu_showLayers).setIcon(R.drawable.ic_menu_mapmode).setAlphabeticShortcut('L');
+      menu.add(ContextMenu.NONE, MENU_NOTE, ContextMenu.NONE, R.string.menu_insertnote).setIcon(R.drawable.ic_menu_myplaces);
+
+      menu.add(ContextMenu.NONE, MENU_STATS, ContextMenu.NONE, R.string.menu_statistics).setIcon(R.drawable.ic_menu_picture).setAlphabeticShortcut('S');
+      menu.add(ContextMenu.NONE, MENU_SHARE, ContextMenu.NONE, R.string.menu_shareTrack).setIcon(R.drawable.ic_menu_share).setAlphabeticShortcut('I');
+      // More
+      menu.add(ContextMenu.NONE, MENU_DRIVE, ContextMenu.NONE, R.string.dialog_drivebackup).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('B');
+      menu.add(ContextMenu.NONE, MENU_TRACKLIST, ContextMenu.NONE, R.string.menu_tracklist).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('P');
+      menu.add(ContextMenu.NONE, MENU_SETTINGS, ContextMenu.NONE, R.string.menu_settings).setIcon(R.drawable.ic_menu_preferences).setAlphabeticShortcut('C');
+      menu.add(ContextMenu.NONE, MENU_ABOUT, ContextMenu.NONE, R.string.menu_about).setIcon(R.drawable.ic_menu_info_details).setAlphabeticShortcut('A');
+      menu.add(ContextMenu.NONE, MENU_CONTRIB, ContextMenu.NONE, R.string.menu_contrib).setIcon(R.drawable.ic_menu_allfriends);
+
+      return result;
+   }
+
+   /*
+    * (non-Javadoc)
+    * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
+    */
+   @Override
+   public boolean onPrepareOptionsMenu(Menu menu)
+   {
+      MenuItem noteMenu = menu.findItem(MENU_NOTE);
+      noteMenu.setEnabled(mLoggerServiceManager.isMediaPrepared());
+
+      MenuItem shareMenu = menu.findItem(MENU_SHARE);
+      shareMenu.setEnabled(mTrackId >= 0);
+
+      return super.onPrepareOptionsMenu(menu);
+   }
+
+   @Override
+   public boolean onOptionsItemSelected(MenuItem item)
+   {
+      boolean handled = false;
+
+      Uri trackUri;
+      Intent intent;
+      switch (item.getItemId())
+      {
+         case MENU_TRACKING:
+            intent = new Intent(this, ControlTracking.class);
+            startActivityForResult(intent, MENU_TRACKING);
+            handled = true;
+            break;
+         case MENU_LAYERS:
+            showDialog(DIALOG_LAYERS);
+            handled = true;
+            break;
+         case MENU_NOTE:
+            intent = new Intent(this, InsertNote.class);
+            startActivityForResult(intent, MENU_NOTE);
+            handled = true;
+            break;
+         case MENU_SETTINGS:
+            intent = new Intent(this, ApplicationPreferenceActivity.class);
+            startActivity(intent);
+            handled = true;
+            break;
+         case MENU_TRACKLIST:
+            intent = new Intent(this, TrackList.class);
+            intent.putExtra(Tracks._ID, this.mTrackId);
+            startActivityForResult(intent, MENU_TRACKLIST);
+            break;
+         case MENU_DRIVE:
+            mSharedPreferences.edit().remove(Constants.DRIVE_BACKUP).apply();
+            createDriveBackup();
+            break;
+         case MENU_STATS:
+            if (this.mTrackId >= 0)
+            {
+               intent = new Intent(this, Statistics.class);
+               trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, mTrackId);
+               intent.setData(trackUri);
+               startActivity(intent);
+               handled = true;
+               break;
+            }
+            else
+            {
+               showDialog(DIALOG_NOTRACK);
+            }
+            handled = true;
+            break;
+         case MENU_ABOUT:
+            intent = new Intent("org.openintents.action.SHOW_ABOUT_DIALOG");
+            try
+            {
+               startActivityForResult(intent, MENU_ABOUT);
+            }
+            catch (ActivityNotFoundException e)
+            {
+               showDialog(DIALOG_INSTALL_ABOUT);
+            }
+            break;
+         case MENU_SHARE:
+            intent = new Intent(Intent.ACTION_RUN);
+            trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, mTrackId);
+            intent.setDataAndType(trackUri, Tracks.CONTENT_ITEM_TYPE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Bitmap bm = findViewById(R.id.mapScreen).getDrawingCache();
+            if (bm != null)
+            {
+               Uri screenStreamUri = ShareTrack.storeScreenBitmap(bm);
+               intent.putExtra(Intent.EXTRA_STREAM, screenStreamUri);
+            }
+            startActivityForResult(Intent.createChooser(intent, getString(R.string.share_track)), MENU_SHARE);
+            handled = true;
+            break;
+         case MENU_CONTRIB:
+            showDialog(DIALOG_CONTRIB);
+         default:
+            handled = super.onOptionsItemSelected(item);
+            break;
+      }
+      return handled;
+   }
+
+   /*
+    * (non-Javadoc)
+    * @see android.app.Activity#onCreateDialog(int)
+    */
+   @Override
+   protected Dialog onCreateDialog(int id)
+   {
+      Dialog dialog = null;
+      LayoutInflater factory = null;
+      View view = null;
+      Builder builder = null;
+      switch (id)
+      {
+         case DIALOG_LAYERS:
+            builder = new AlertDialog.Builder(this);
+            factory = LayoutInflater.from(this);
+            view = factory.inflate(R.layout.layerdialog, null);
+
+            mTraffic = (CheckBox) view.findViewById(R.id.layer_traffic);
+            mSpeed = (CheckBox) view.findViewById(R.id.layer_speed);
+            mAltitude = (CheckBox) view.findViewById(R.id.layer_altitude);
+            mDistance = (CheckBox) view.findViewById(R.id.layer_distance);
+            mCompass = (CheckBox) view.findViewById(R.id.layer_compass);
+            mLocation = (CheckBox) view.findViewById(R.id.layer_location);
+
+            ((RadioGroup) view.findViewById(R.id.google_backgrounds)).setOnCheckedChangeListener(mGroupCheckedChangeListener);
+            ((RadioGroup) view.findViewById(R.id.osm_backgrounds)).setOnCheckedChangeListener(mGroupCheckedChangeListener);
+
+            mTraffic.setOnCheckedChangeListener(mCheckedChangeListener);
+            mSpeed.setOnCheckedChangeListener(mCheckedChangeListener);
+            mAltitude.setOnCheckedChangeListener(mCheckedChangeListener);
+            mDistance.setOnCheckedChangeListener(mCheckedChangeListener);
+            mCompass.setOnCheckedChangeListener(mCheckedChangeListener);
+            mLocation.setOnCheckedChangeListener(mCheckedChangeListener);
+
+            builder.setTitle(R.string.dialog_layer_title).setIcon(android.R.drawable.ic_dialog_map).setPositiveButton(R.string.btn_okay, null).setView(view);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_NOTRACK:
+            builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.dialog_notrack_title).setMessage(R.string.dialog_notrack_message).setIcon(android.R.drawable.ic_dialog_alert)
+                  .setPositiveButton(R.string.btn_selecttrack, mNoTrackDialogListener).setNegativeButton(R.string.btn_cancel, null);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_INSTALL_ABOUT:
+            builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.dialog_nooiabout).setMessage(R.string.dialog_nooiabout_message).setIcon(android.R.drawable.ic_dialog_alert)
+                  .setPositiveButton(R.string.btn_install, mOiAboutDialogListener).setNegativeButton(R.string.btn_cancel, null);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_URIS:
+            builder = new AlertDialog.Builder(this);
+            factory = LayoutInflater.from(this);
+            view = factory.inflate(R.layout.mediachooser, null);
+            mGallery = (Gallery) view.findViewById(R.id.gallery);
+            builder.setTitle(R.string.dialog_select_media_title).setMessage(R.string.dialog_select_media_message).setIcon(android.R.drawable.ic_dialog_alert)
+                  .setNegativeButton(R.string.btn_cancel, null).setPositiveButton(R.string.btn_okay, mNoteSelectDialogListener).setView(view);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_CONTRIB:
+            builder = new AlertDialog.Builder(this);
+            factory = LayoutInflater.from(this);
+            view = factory.inflate(R.layout.contrib, null);
+            TextView contribView = (TextView) view.findViewById(R.id.contrib_view);
+            contribView.setText(R.string.dialog_contrib_message);
+            builder.setTitle(R.string.dialog_contrib_title).setView(view).setIcon(android.R.drawable.ic_dialog_email).setPositiveButton(R.string.btn_okay, null);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_DRIVE:
+            builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.dialog_drivebackup).setMessage(R.string.dialog_drivebackup_message).setIcon(android.R.drawable.ic_dialog_alert)
+                  .setPositiveButton(android.R.string.yes, mDriveDialogListener).setNegativeButton(android.R.string.no, mDriveDialogListener);
+            dialog = builder.create();
+            return dialog;
+         default:
+            return super.onCreateDialog(id);
+      }
+   }
+
+   /*
+    * (non-Javadoc)
+    * @see android.app.Activity#onPrepareDialog(int, android.app.Dialog)
+    */
+   @Override
+   protected void onPrepareDialog(int id, Dialog dialog)
+   {
+      RadioButton satellite;
+      RadioButton regular;
+      RadioButton mapnik;
+      RadioButton cycle;
+      switch (id)
+      {
+         case DIALOG_LAYERS:
+            satellite = (RadioButton) dialog.findViewById(R.id.layer_google_satellite);
+            regular = (RadioButton) dialog.findViewById(R.id.layer_google_regular);
+            satellite.setChecked(mSharedPreferences.getBoolean(Constants.SATELLITE, false));
+            regular.setChecked(!mSharedPreferences.getBoolean(Constants.SATELLITE, false));
+
+            int osmbase = mSharedPreferences.getInt(Constants.OSMBASEOVERLAY, 0);
+            mapnik = (RadioButton) dialog.findViewById(R.id.layer_osm_maknik);
+            cycle = (RadioButton) dialog.findViewById(R.id.layer_osm_bicycle);
+            mapnik.setChecked(osmbase == Constants.OSM_MAKNIK);
+            cycle.setChecked(osmbase == Constants.OSM_CYCLE);
+
+            mTraffic.setChecked(mSharedPreferences.getBoolean(Constants.TRAFFIC, false));
+            mSpeed.setChecked(mSharedPreferences.getBoolean(Constants.SPEED, false));
+            mAltitude.setChecked(mSharedPreferences.getBoolean(Constants.ALTITUDE, false));
+            mDistance.setChecked(mSharedPreferences.getBoolean(Constants.DISTANCE, false));
+            mCompass.setChecked(mSharedPreferences.getBoolean(Constants.COMPASS, false));
+            mLocation.setChecked(mSharedPreferences.getBoolean(Constants.LOCATION, false));
+            int provider = Integer.valueOf(mSharedPreferences.getString(Constants.MAPPROVIDER, "" + Constants.GOOGLE)).intValue();
+            switch (provider)
+            {
+               case Constants.GOOGLE:
+                  dialog.findViewById(R.id.google_backgrounds).setVisibility(View.VISIBLE);
+                  dialog.findViewById(R.id.osm_backgrounds).setVisibility(View.GONE);
+                  dialog.findViewById(R.id.shared_layers).setVisibility(View.VISIBLE);
+                  dialog.findViewById(R.id.google_overlays).setVisibility(View.VISIBLE);
+                  break;
+               case Constants.OSM:
+                  dialog.findViewById(R.id.osm_backgrounds).setVisibility(View.VISIBLE);
+                  dialog.findViewById(R.id.google_backgrounds).setVisibility(View.GONE);
+                  dialog.findViewById(R.id.shared_layers).setVisibility(View.VISIBLE);
+                  dialog.findViewById(R.id.google_overlays).setVisibility(View.GONE);
+                  break;
+               default:
+                  Log.e(TAG, "Fault in value " + provider + " as MapProvider.");
+                  break;
+            }
+            break;
+         case DIALOG_URIS:
+            mGallery.setAdapter(mMediaAdapter);
+         default:
+            break;
+      }
+      super.onPrepareDialog(id, dialog);
+   }
+
+   /*
+    * (non-Javadoc)
+    * @see android.app.Activity#onActivityResult(int, int, android.content.Intent)
+    */
+   @Override
+   protected void onActivityResult(int requestCode, int resultCode, Intent intent)
+   {
+      super.onActivityResult(requestCode, resultCode, intent);
+      Uri trackUri;
+      long trackId;
+      switch (requestCode)
+      {
+         case MENU_TRACKLIST:
+            if (resultCode == RESULT_OK)
+            {
+               trackUri = intent.getData();
+               trackId = Long.parseLong(trackUri.getLastPathSegment());
+               mAverageSpeed = 0.0;
+               moveToTrack(trackId, true);
+            }
+            break;
+         case MENU_ABOUT:
+            break;
+         case MENU_TRACKING:
+            if (resultCode == RESULT_OK)
+            {
+               trackUri = intent.getData();
+               if (trackUri != null)
+               {
+                  trackId = Long.parseLong(trackUri.getLastPathSegment());
+                  mAverageSpeed = 0.0;
+                  moveToTrack(trackId, true);
+               }
+            }
+            break;
+         case MENU_SHARE:
+            ShareTrack.clearScreenBitmap();
+            break;
+         case DIALOG_DRIVE:
+            if (resultCode == RESULT_OK)
+            {
+               googleApiClient.connect();
+            }
+            break;
+         default:
+            Log.e(TAG, "Returned form unknow activity: " + requestCode);
+            break;
+      }
+   }
+
    private void createDriveBackup()
    {
       boolean madeChoice = mSharedPreferences.contains(Constants.DRIVE_BACKUP);
       if (madeChoice)
       {
          boolean choice = mSharedPreferences.getBoolean(Constants.DRIVE_BACKUP, true);
+         if (choice)
+         {
+            if (googleApiClient == null)
+            {
+               DriveBackup backup = new DriveBackup(this);
+               googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(backup).addOnConnectionFailedListener(backup).build();
+            }
+            googleApiClient.connect();
+         }
       }
       else
       {
@@ -813,312 +1143,6 @@ public class LoggerMap extends MapActivity
                updateSpeedColoring();
             }
          };
-   }
-
-   @Override
-   public boolean onCreateOptionsMenu(Menu menu)
-   {
-      boolean result = super.onCreateOptionsMenu(menu);
-
-      menu.add(ContextMenu.NONE, MENU_TRACKING, ContextMenu.NONE, R.string.menu_tracking).setIcon(R.drawable.ic_menu_movie).setAlphabeticShortcut('T');
-      menu.add(ContextMenu.NONE, MENU_LAYERS, ContextMenu.NONE, R.string.menu_showLayers).setIcon(R.drawable.ic_menu_mapmode).setAlphabeticShortcut('L');
-      menu.add(ContextMenu.NONE, MENU_NOTE, ContextMenu.NONE, R.string.menu_insertnote).setIcon(R.drawable.ic_menu_myplaces);
-
-      menu.add(ContextMenu.NONE, MENU_STATS, ContextMenu.NONE, R.string.menu_statistics).setIcon(R.drawable.ic_menu_picture).setAlphabeticShortcut('S');
-      menu.add(ContextMenu.NONE, MENU_SHARE, ContextMenu.NONE, R.string.menu_shareTrack).setIcon(R.drawable.ic_menu_share).setAlphabeticShortcut('I');
-      // More
-      menu.add(ContextMenu.NONE, MENU_DRIVE, ContextMenu.NONE, R.string.dialog_drivebackup).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('B');
-      menu.add(ContextMenu.NONE, MENU_TRACKLIST, ContextMenu.NONE, R.string.menu_tracklist).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('P');
-      menu.add(ContextMenu.NONE, MENU_SETTINGS, ContextMenu.NONE, R.string.menu_settings).setIcon(R.drawable.ic_menu_preferences).setAlphabeticShortcut('C');
-      menu.add(ContextMenu.NONE, MENU_ABOUT, ContextMenu.NONE, R.string.menu_about).setIcon(R.drawable.ic_menu_info_details).setAlphabeticShortcut('A');
-      menu.add(ContextMenu.NONE, MENU_CONTRIB, ContextMenu.NONE, R.string.menu_contrib).setIcon(R.drawable.ic_menu_allfriends);
-
-      return result;
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
-    */
-   @Override
-   public boolean onPrepareOptionsMenu(Menu menu)
-   {
-      MenuItem noteMenu = menu.findItem(MENU_NOTE);
-      noteMenu.setEnabled(mLoggerServiceManager.isMediaPrepared());
-
-      MenuItem shareMenu = menu.findItem(MENU_SHARE);
-      shareMenu.setEnabled(mTrackId >= 0);
-
-      return super.onPrepareOptionsMenu(menu);
-   }
-
-   @Override
-   public boolean onOptionsItemSelected(MenuItem item)
-   {
-      boolean handled = false;
-
-      Uri trackUri;
-      Intent intent;
-      switch (item.getItemId())
-      {
-         case MENU_TRACKING:
-            intent = new Intent(this, ControlTracking.class);
-            startActivityForResult(intent, MENU_TRACKING);
-            handled = true;
-            break;
-         case MENU_LAYERS:
-            showDialog(DIALOG_LAYERS);
-            handled = true;
-            break;
-         case MENU_NOTE:
-            intent = new Intent(this, InsertNote.class);
-            startActivityForResult(intent, MENU_NOTE);
-            handled = true;
-            break;
-         case MENU_SETTINGS:
-            intent = new Intent(this, ApplicationPreferenceActivity.class);
-            startActivity(intent);
-            handled = true;
-            break;
-         case MENU_TRACKLIST:
-            intent = new Intent(this, TrackList.class);
-            intent.putExtra(Tracks._ID, this.mTrackId);
-            startActivityForResult(intent, MENU_TRACKLIST);
-            break;
-         case MENU_DRIVE:
-            mSharedPreferences.edit().remove(Constants.DRIVE_BACKUP).apply();
-            createDriveBackup();
-            break;
-         case MENU_STATS:
-            if (this.mTrackId >= 0)
-            {
-               intent = new Intent(this, Statistics.class);
-               trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, mTrackId);
-               intent.setData(trackUri);
-               startActivity(intent);
-               handled = true;
-               break;
-            }
-            else
-            {
-               showDialog(DIALOG_NOTRACK);
-            }
-            handled = true;
-            break;
-         case MENU_ABOUT:
-            intent = new Intent("org.openintents.action.SHOW_ABOUT_DIALOG");
-            try
-            {
-               startActivityForResult(intent, MENU_ABOUT);
-            }
-            catch (ActivityNotFoundException e)
-            {
-               showDialog(DIALOG_INSTALL_ABOUT);
-            }
-            break;
-         case MENU_SHARE:
-            intent = new Intent(Intent.ACTION_RUN);
-            trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, mTrackId);
-            intent.setDataAndType(trackUri, Tracks.CONTENT_ITEM_TYPE);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            Bitmap bm = findViewById(R.id.mapScreen).getDrawingCache();
-            if (bm != null)
-            {
-               Uri screenStreamUri = ShareTrack.storeScreenBitmap(bm);
-               intent.putExtra(Intent.EXTRA_STREAM, screenStreamUri);
-            }
-            startActivityForResult(Intent.createChooser(intent, getString(R.string.share_track)), MENU_SHARE);
-            handled = true;
-            break;
-         case MENU_CONTRIB:
-            showDialog(DIALOG_CONTRIB);
-         default:
-            handled = super.onOptionsItemSelected(item);
-            break;
-      }
-      return handled;
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see android.app.Activity#onCreateDialog(int)
-    */
-   @Override
-   protected Dialog onCreateDialog(int id)
-   {
-      Dialog dialog = null;
-      LayoutInflater factory = null;
-      View view = null;
-      Builder builder = null;
-      switch (id)
-      {
-         case DIALOG_LAYERS:
-            builder = new AlertDialog.Builder(this);
-            factory = LayoutInflater.from(this);
-            view = factory.inflate(R.layout.layerdialog, null);
-
-            mTraffic = (CheckBox) view.findViewById(R.id.layer_traffic);
-            mSpeed = (CheckBox) view.findViewById(R.id.layer_speed);
-            mAltitude = (CheckBox) view.findViewById(R.id.layer_altitude);
-            mDistance = (CheckBox) view.findViewById(R.id.layer_distance);
-            mCompass = (CheckBox) view.findViewById(R.id.layer_compass);
-            mLocation = (CheckBox) view.findViewById(R.id.layer_location);
-
-            ((RadioGroup) view.findViewById(R.id.google_backgrounds)).setOnCheckedChangeListener(mGroupCheckedChangeListener);
-            ((RadioGroup) view.findViewById(R.id.osm_backgrounds)).setOnCheckedChangeListener(mGroupCheckedChangeListener);
-
-            mTraffic.setOnCheckedChangeListener(mCheckedChangeListener);
-            mSpeed.setOnCheckedChangeListener(mCheckedChangeListener);
-            mAltitude.setOnCheckedChangeListener(mCheckedChangeListener);
-            mDistance.setOnCheckedChangeListener(mCheckedChangeListener);
-            mCompass.setOnCheckedChangeListener(mCheckedChangeListener);
-            mLocation.setOnCheckedChangeListener(mCheckedChangeListener);
-
-            builder.setTitle(R.string.dialog_layer_title).setIcon(android.R.drawable.ic_dialog_map).setPositiveButton(R.string.btn_okay, null).setView(view);
-            dialog = builder.create();
-            return dialog;
-         case DIALOG_NOTRACK:
-            builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.dialog_notrack_title).setMessage(R.string.dialog_notrack_message).setIcon(android.R.drawable.ic_dialog_alert)
-                  .setPositiveButton(R.string.btn_selecttrack, mNoTrackDialogListener).setNegativeButton(R.string.btn_cancel, null);
-            dialog = builder.create();
-            return dialog;
-         case DIALOG_INSTALL_ABOUT:
-            builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.dialog_nooiabout).setMessage(R.string.dialog_nooiabout_message).setIcon(android.R.drawable.ic_dialog_alert)
-                  .setPositiveButton(R.string.btn_install, mOiAboutDialogListener).setNegativeButton(R.string.btn_cancel, null);
-            dialog = builder.create();
-            return dialog;
-         case DIALOG_URIS:
-            builder = new AlertDialog.Builder(this);
-            factory = LayoutInflater.from(this);
-            view = factory.inflate(R.layout.mediachooser, null);
-            mGallery = (Gallery) view.findViewById(R.id.gallery);
-            builder.setTitle(R.string.dialog_select_media_title).setMessage(R.string.dialog_select_media_message).setIcon(android.R.drawable.ic_dialog_alert)
-                  .setNegativeButton(R.string.btn_cancel, null).setPositiveButton(R.string.btn_okay, mNoteSelectDialogListener).setView(view);
-            dialog = builder.create();
-            return dialog;
-         case DIALOG_CONTRIB:
-            builder = new AlertDialog.Builder(this);
-            factory = LayoutInflater.from(this);
-            view = factory.inflate(R.layout.contrib, null);
-            TextView contribView = (TextView) view.findViewById(R.id.contrib_view);
-            contribView.setText(R.string.dialog_contrib_message);
-            builder.setTitle(R.string.dialog_contrib_title).setView(view).setIcon(android.R.drawable.ic_dialog_email).setPositiveButton(R.string.btn_okay, null);
-            dialog = builder.create();
-            return dialog;
-         case DIALOG_DRIVE:
-            builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.dialog_drivebackup).setMessage(R.string.dialog_drivebackup_message).setIcon(android.R.drawable.ic_dialog_alert)
-                  .setPositiveButton(android.R.string.yes, mDriveDialogListener).setNegativeButton(android.R.string.no, mDriveDialogListener);
-            dialog = builder.create();
-            return dialog;
-         default:
-            return super.onCreateDialog(id);
-      }
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see android.app.Activity#onPrepareDialog(int, android.app.Dialog)
-    */
-   @Override
-   protected void onPrepareDialog(int id, Dialog dialog)
-   {
-      RadioButton satellite;
-      RadioButton regular;
-      RadioButton mapnik;
-      RadioButton cycle;
-      switch (id)
-      {
-         case DIALOG_LAYERS:
-            satellite = (RadioButton) dialog.findViewById(R.id.layer_google_satellite);
-            regular = (RadioButton) dialog.findViewById(R.id.layer_google_regular);
-            satellite.setChecked(mSharedPreferences.getBoolean(Constants.SATELLITE, false));
-            regular.setChecked(!mSharedPreferences.getBoolean(Constants.SATELLITE, false));
-
-            int osmbase = mSharedPreferences.getInt(Constants.OSMBASEOVERLAY, 0);
-            mapnik = (RadioButton) dialog.findViewById(R.id.layer_osm_maknik);
-            cycle = (RadioButton) dialog.findViewById(R.id.layer_osm_bicycle);
-            mapnik.setChecked(osmbase == Constants.OSM_MAKNIK);
-            cycle.setChecked(osmbase == Constants.OSM_CYCLE);
-
-            mTraffic.setChecked(mSharedPreferences.getBoolean(Constants.TRAFFIC, false));
-            mSpeed.setChecked(mSharedPreferences.getBoolean(Constants.SPEED, false));
-            mAltitude.setChecked(mSharedPreferences.getBoolean(Constants.ALTITUDE, false));
-            mDistance.setChecked(mSharedPreferences.getBoolean(Constants.DISTANCE, false));
-            mCompass.setChecked(mSharedPreferences.getBoolean(Constants.COMPASS, false));
-            mLocation.setChecked(mSharedPreferences.getBoolean(Constants.LOCATION, false));
-            int provider = Integer.valueOf(mSharedPreferences.getString(Constants.MAPPROVIDER, "" + Constants.GOOGLE)).intValue();
-            switch (provider)
-            {
-               case Constants.GOOGLE:
-                  dialog.findViewById(R.id.google_backgrounds).setVisibility(View.VISIBLE);
-                  dialog.findViewById(R.id.osm_backgrounds).setVisibility(View.GONE);
-                  dialog.findViewById(R.id.shared_layers).setVisibility(View.VISIBLE);
-                  dialog.findViewById(R.id.google_overlays).setVisibility(View.VISIBLE);
-                  break;
-               case Constants.OSM:
-                  dialog.findViewById(R.id.osm_backgrounds).setVisibility(View.VISIBLE);
-                  dialog.findViewById(R.id.google_backgrounds).setVisibility(View.GONE);
-                  dialog.findViewById(R.id.shared_layers).setVisibility(View.VISIBLE);
-                  dialog.findViewById(R.id.google_overlays).setVisibility(View.GONE);
-                  break;
-               default:
-                  Log.e(TAG, "Fault in value " + provider + " as MapProvider.");
-                  break;
-            }
-            break;
-         case DIALOG_URIS:
-            mGallery.setAdapter(mMediaAdapter);
-         default:
-            break;
-      }
-      super.onPrepareDialog(id, dialog);
-   }
-
-   /*
-    * (non-Javadoc)
-    * @see android.app.Activity#onActivityResult(int, int, android.content.Intent)
-    */
-   @Override
-   protected void onActivityResult(int requestCode, int resultCode, Intent intent)
-   {
-      super.onActivityResult(requestCode, resultCode, intent);
-      Uri trackUri;
-      long trackId;
-      switch (requestCode)
-      {
-         case MENU_TRACKLIST:
-            if (resultCode == RESULT_OK)
-            {
-               trackUri = intent.getData();
-               trackId = Long.parseLong(trackUri.getLastPathSegment());
-               mAverageSpeed = 0.0;
-               moveToTrack(trackId, true);
-            }
-            break;
-         case MENU_ABOUT:
-            break;
-         case MENU_TRACKING:
-            if (resultCode == RESULT_OK)
-            {
-               trackUri = intent.getData();
-               if (trackUri != null)
-               {
-                  trackId = Long.parseLong(trackUri.getLastPathSegment());
-                  mAverageSpeed = 0.0;
-                  moveToTrack(trackId, true);
-               }
-            }
-            break;
-         case MENU_SHARE:
-            ShareTrack.clearScreenBitmap();
-            break;
-         default:
-            Log.e(TAG, "Returned form unknow activity: " + requestCode);
-            break;
-      }
    }
 
    /**
