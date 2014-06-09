@@ -79,6 +79,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -516,6 +517,7 @@ public class GPSLoggerService extends Service implements LocationListener
       @Override
       public void run()
       {
+         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
          Looper.prepare();
          mHandler = new Handler()
             {
