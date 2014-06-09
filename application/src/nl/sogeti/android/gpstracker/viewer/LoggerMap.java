@@ -223,7 +223,7 @@ public class LoggerMap extends MapActivity
    protected void onResume()
    {
       super.onResume();
-      mLoggerServiceManager.startup(this, mServiceConnected);
+      mLoggerServiceManager.startup(mServiceConnected);
 
       mSharedPreferences.registerOnSharedPreferenceChangeListener(mSharedPreferenceChangeListener);
       mUnits.setUnitsChangeListener(mUnitsChangeListener);
@@ -274,7 +274,7 @@ public class LoggerMap extends MapActivity
       mMylocation.disableMyLocation();
       mMylocation.disableCompass();
 
-      this.mLoggerServiceManager.shutdown(this);
+      this.mLoggerServiceManager.shutdown();
 
       super.onPause();
    }
@@ -303,10 +303,6 @@ public class LoggerMap extends MapActivity
       {
          mWakeLock.release();
          Log.w(TAG, "onDestroy(): Released lock to keep screen on!");
-      }
-      if (mLoggerServiceManager.getLoggingState() == Constants.STOPPED)
-      {
-         stopService(new Intent(Constants.SERVICENAME));
       }
       mUnits = null;
    }

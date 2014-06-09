@@ -149,6 +149,7 @@ public class GPSLoggerService extends Service implements LocationListener
    public static final int EXTRA_COMMAND_PAUSE = 1;
    public static final int EXTRA_COMMAND_RESUME = 2;
    public static final int EXTRA_COMMAND_STOP = 3;
+   public static final int EXTRA_COMMAND_REBOOT = 4;
 
    private LocationManager mLocationManager;
    private NotificationManager mNoticationManager;
@@ -686,8 +687,8 @@ public class GPSLoggerService extends Service implements LocationListener
    private synchronized void crashRestoreState()
    {
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-      long previousState = preferences.getInt(SERVICESTATE_STATE, Constants.STOPPED);
-      if (previousState == Constants.LOGGING || previousState == Constants.PAUSED)
+      long previousState = preferences.getInt(GPSLoggerService.SERVICESTATE_STATE, Constants.STOPPED);
+      if (isLogging(this))
       {
          Log.w(TAG, "Recovering from a crash or kill and restoring state.");
          startNotification();
@@ -707,6 +708,14 @@ public class GPSLoggerService extends Service implements LocationListener
             pauseLogging();
          }
       }
+   }
+
+   public static boolean isLogging(Context ctx)
+   {
+      SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
+      long previousState = preferences.getInt(GPSLoggerService.SERVICESTATE_STATE, Constants.STOPPED);
+      boolean isLogging = previousState == Constants.LOGGING || previousState == Constants.PAUSED;
+      return isLogging;
    }
 
    /**
@@ -774,6 +783,9 @@ public class GPSLoggerService extends Service implements LocationListener
       ;
       if (this.mLoggingState == Constants.STOPPED)
       {
+         // Break the lifecycle during logging
+         startService(new Intent(Constants.SERVICENAME));
+
          startNewTrack();
          sendRequestLocationUpdatesMessage();
          sendRequestStatusUpdateMessage();
@@ -855,6 +867,9 @@ public class GPSLoggerService extends Service implements LocationListener
       stopNotification();
 
       broadCastLoggingState();
+
+      // Restored the broken lifecycle after logging
+      stopService(new Intent(Constants.SERVICENAME));
    }
 
    private void startListening(String provider, long intervaltime, float distance)

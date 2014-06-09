@@ -69,42 +69,42 @@ public class ControlTracking extends Activity
    private final View.OnClickListener mLoggingControlListener = new View.OnClickListener()
       {
          @Override
-         public void onClick( View v )
+         public void onClick(View v)
          {
             int id = v.getId();
             Intent intent = new Intent();
-            switch( id )
+            switch (id)
             {
                case R.id.logcontrol_start:
-                  long loggerTrackId = mLoggerServiceManager.startGPSLogging( null );
-                  
+                  long loggerTrackId = mLoggerServiceManager.startGPSLogging(null);
+
                   // Start a naming of the track
-                  Intent namingIntent = new Intent( ControlTracking.this, NameTrack.class );
-                  namingIntent.setData( ContentUris.withAppendedId( Tracks.CONTENT_URI, loggerTrackId ) );
-                  startActivity( namingIntent );
-                  
+                  Intent namingIntent = new Intent(ControlTracking.this, NameTrack.class);
+                  namingIntent.setData(ContentUris.withAppendedId(Tracks.CONTENT_URI, loggerTrackId));
+                  startActivity(namingIntent);
+
                   // Create data for the caller that a new track has been started
                   ComponentName caller = ControlTracking.this.getCallingActivity();
-                  if( caller != null )
+                  if (caller != null)
                   {
-                     intent.setData( ContentUris.withAppendedId( Tracks.CONTENT_URI, loggerTrackId ) );
-                     setResult( RESULT_OK, intent );
-                  }                  
+                     intent.setData(ContentUris.withAppendedId(Tracks.CONTENT_URI, loggerTrackId));
+                     setResult(RESULT_OK, intent);
+                  }
                   break;
                case R.id.logcontrol_pause:
                   mLoggerServiceManager.pauseGPSLogging();
-                  setResult( RESULT_OK, intent );
+                  setResult(RESULT_OK, intent);
                   break;
                case R.id.logcontrol_resume:
                   mLoggerServiceManager.resumeGPSLogging();
-                  setResult( RESULT_OK, intent );
+                  setResult(RESULT_OK, intent);
                   break;
                case R.id.logcontrol_stop:
                   mLoggerServiceManager.stopGPSLogging();
-                  setResult( RESULT_OK, intent );
+                  setResult(RESULT_OK, intent);
                   break;
                default:
-                  setResult( RESULT_CANCELED, intent );
+                  setResult(RESULT_CANCELED, intent);
                   break;
             }
             finish();
@@ -113,77 +113,74 @@ public class ControlTracking extends Activity
    private OnClickListener mDialogClickListener = new OnClickListener()
       {
          @Override
-         public void onClick( DialogInterface dialog, int which )
+         public void onClick(DialogInterface dialog, int which)
          {
-            setResult( RESULT_CANCELED,  new Intent() );
+            setResult(RESULT_CANCELED, new Intent());
             finish();
          }
       };
 
    @Override
-   protected void onCreate( Bundle savedInstanceState )
+   protected void onCreate(Bundle savedInstanceState)
    {
-      super.onCreate( savedInstanceState );
-      
-      this.setVisible( false );
+      super.onCreate(savedInstanceState);
+
+      this.setVisible(false);
       paused = false;
-      mLoggerServiceManager = new GPSLoggerServiceManager( this );
+      mLoggerServiceManager = new GPSLoggerServiceManager(this);
    }
 
    @Override
    protected void onResume()
    {
       super.onResume();
-      mLoggerServiceManager.startup( this, new Runnable()
+      mLoggerServiceManager.startup(new Runnable()
          {
             @Override
             public void run()
             {
-               showDialog( DIALOG_LOGCONTROL );
+               showDialog(DIALOG_LOGCONTROL);
             }
-         } );
+         });
    }
 
    @Override
    protected void onPause()
    {
       super.onPause();
-      mLoggerServiceManager.shutdown( this );
+      mLoggerServiceManager.shutdown();
       paused = true;
    }
 
    @Override
-   protected Dialog onCreateDialog( int id )
+   protected Dialog onCreateDialog(int id)
    {
       Dialog dialog = null;
       LayoutInflater factory = null;
       View view = null;
       Builder builder = null;
-      switch( id )
+      switch (id)
       {
          case DIALOG_LOGCONTROL:
-            builder = new AlertDialog.Builder( this );
-            factory = LayoutInflater.from( this );
-            view = factory.inflate( R.layout.logcontrol, null );
-            builder.setTitle( R.string.dialog_tracking_title ).
-            setIcon( android.R.drawable.ic_dialog_alert ).
-            setNegativeButton( R.string.btn_cancel, mDialogClickListener ).
-            setView( view );
+            builder = new AlertDialog.Builder(this);
+            factory = LayoutInflater.from(this);
+            view = factory.inflate(R.layout.logcontrol, null);
+            builder.setTitle(R.string.dialog_tracking_title).setIcon(android.R.drawable.ic_dialog_alert).setNegativeButton(R.string.btn_cancel, mDialogClickListener).setView(view);
             dialog = builder.create();
-            start = (Button) view.findViewById( R.id.logcontrol_start );
-            pause = (Button) view.findViewById( R.id.logcontrol_pause );
-            resume = (Button) view.findViewById( R.id.logcontrol_resume );
-            stop = (Button) view.findViewById( R.id.logcontrol_stop );
-            start.setOnClickListener( mLoggingControlListener );
-            pause.setOnClickListener( mLoggingControlListener );
-            resume.setOnClickListener( mLoggingControlListener );
-            stop.setOnClickListener( mLoggingControlListener );
-            dialog.setOnDismissListener( new OnDismissListener()
+            start = (Button) view.findViewById(R.id.logcontrol_start);
+            pause = (Button) view.findViewById(R.id.logcontrol_pause);
+            resume = (Button) view.findViewById(R.id.logcontrol_resume);
+            stop = (Button) view.findViewById(R.id.logcontrol_stop);
+            start.setOnClickListener(mLoggingControlListener);
+            pause.setOnClickListener(mLoggingControlListener);
+            resume.setOnClickListener(mLoggingControlListener);
+            stop.setOnClickListener(mLoggingControlListener);
+            dialog.setOnDismissListener(new OnDismissListener()
                {
                   @Override
-                  public void onDismiss( DialogInterface dialog )
+                  public void onDismiss(DialogInterface dialog)
                   {
-                     if( !paused )
+                     if (!paused)
                      {
                         finish();
                      }
@@ -191,7 +188,7 @@ public class ControlTracking extends Activity
                });
             return dialog;
          default:
-            return super.onCreateDialog( id );
+            return super.onCreateDialog(id);
       }
    }
 
@@ -200,49 +197,47 @@ public class ControlTracking extends Activity
     * @see android.app.Activity#onPrepareDialog(int, android.app.Dialog)
     */
    @Override
-   protected void onPrepareDialog( int id, Dialog dialog )
+   protected void onPrepareDialog(int id, Dialog dialog)
    {
-      switch( id )
+      switch (id)
       {
          case DIALOG_LOGCONTROL:
-            updateDialogState( mLoggerServiceManager.getLoggingState() );
+            updateDialogState(mLoggerServiceManager.getLoggingState());
             break;
          default:
             break;
       }
-      super.onPrepareDialog( id, dialog );
+      super.onPrepareDialog(id, dialog);
    }
-   
-    
 
-   private void updateDialogState( int state )
+   private void updateDialogState(int state)
    {
-      switch( state )
+      switch (state)
       {
          case Constants.STOPPED:
-            start.setEnabled( true );
-            pause.setEnabled( false );
-            resume.setEnabled( false );
-            stop.setEnabled( false );
+            start.setEnabled(true);
+            pause.setEnabled(false);
+            resume.setEnabled(false);
+            stop.setEnabled(false);
             break;
          case Constants.LOGGING:
-            start.setEnabled( false );
-            pause.setEnabled( true );
-            resume.setEnabled( false );
-            stop.setEnabled( true );
+            start.setEnabled(false);
+            pause.setEnabled(true);
+            resume.setEnabled(false);
+            stop.setEnabled(true);
             break;
          case Constants.PAUSED:
-            start.setEnabled( false );
-            pause.setEnabled( false );
-            resume.setEnabled( true );
-            stop.setEnabled( true );
+            start.setEnabled(false);
+            pause.setEnabled(false);
+            resume.setEnabled(true);
+            stop.setEnabled(true);
             break;
          default:
-            Log.w( TAG, String.format( "State %d of logging, enabling and hope for the best....", state ) );
-            start.setEnabled( false );
-            pause.setEnabled( false );
-            resume.setEnabled( false );
-            stop.setEnabled( false );
+            Log.w(TAG, String.format("State %d of logging, enabling and hope for the best....", state));
+            start.setEnabled(false);
+            pause.setEnabled(false);
+            resume.setEnabled(false);
+            stop.setEnabled(false);
             break;
       }
    }

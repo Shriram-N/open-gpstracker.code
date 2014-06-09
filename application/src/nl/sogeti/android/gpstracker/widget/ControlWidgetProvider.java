@@ -44,8 +44,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 
 /**
- * An App Widget for on the home screen to control logging with a start, pause,
- * resume and stop
+ * An App Widget for on the home screen to control logging with a start, pause, resume and stop
  * 
  * @version $Id$
  * @author grootren (c) Mar 8, 2011, Sogeti B.V.
@@ -63,26 +62,24 @@ public class ControlWidgetProvider extends AppWidgetProvider
    {
       super();
    }
-   
+
    @Override
    public void onEnabled(Context context)
    {
-//      Log.d(TAG, "onEnabled() ");
+      //      Log.d(TAG, "onEnabled() ");
       super.onEnabled(context);
-
-      context.startService(new Intent(Constants.SERVICENAME));
    }
 
    @Override
    public void onDisabled(Context context)
    {
-//      Log.d(TAG, "onDisabled() ");
+      //      Log.d(TAG, "onDisabled() ");
    }
 
    @Override
    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
    {
-//      Log.d(TAG, "onDisabled() ");
+      //      Log.d(TAG, "onDisabled() ");
       // Update each requested appWidgetId
       RemoteViews view = buildUpdate(context, -1);
 
@@ -109,7 +106,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
     */
    private static void updateButtons(RemoteViews views, Context context)
    {
-//      Log.d(TAG, "Updated the remote views to state " + mState);
+      //      Log.d(TAG, "Updated the remote views to state " + mState);
       switch (mState)
       {
          case Constants.LOGGING:
@@ -129,10 +126,10 @@ public class ControlWidgetProvider extends AppWidgetProvider
             break;
       }
    }
-   
-   private static void setEnableInsertNote( RemoteViews views, boolean enabled )
+
+   private static void setEnableInsertNote(RemoteViews views, boolean enabled)
    {
-      if( enabled )
+      if (enabled)
       {
          views.setViewVisibility(R.id.widget_insertnote_enabled, View.VISIBLE);
          views.setViewVisibility(R.id.widget_insertnote_disabled, View.GONE);
@@ -158,8 +155,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
       launchIntent.addCategory(Intent.CATEGORY_ALTERNATIVE);
       launchIntent.setData(Uri.parse("custom:" + buttonId));
       PendingIntent pi = PendingIntent.getBroadcast(context, 0 /* no requestCode */, launchIntent, 0 /*
-                                                                                                      * no
-                                                                                                      * flags
+                                                                                                      * no flags
                                                                                                       */);
       return pi;
    }
@@ -173,7 +169,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
    @Override
    public void onReceive(Context context, Intent intent)
    {
-//      Log.d(TAG, "Did recieve intent with action: " + intent.getAction());
+      //      Log.d(TAG, "Did recieve intent with action: " + intent.getAction());
       super.onReceive(context, intent);
       String action = intent.getAction();
       if (Constants.LOGGING_STATE_CHANGED_ACTION.equals(action))
@@ -187,15 +183,15 @@ public class ControlWidgetProvider extends AppWidgetProvider
          int buttonId = Integer.parseInt(data.getSchemeSpecificPart());
          if (buttonId == BUTTON_TRACKINGCONTROL)
          {
-            Intent controlIntent = new Intent( context, ControlTracking.class );
+            Intent controlIntent = new Intent(context, ControlTracking.class);
             controlIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(controlIntent);
          }
          else if (buttonId == BUTTON_INSERTNOTE)
          {
-            Intent noteIntent = new Intent( context, InsertNote.class );
+            Intent noteIntent = new Intent(context, InsertNote.class);
             noteIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity( noteIntent );
+            context.startActivity(noteIntent);
          }
       }
       else
