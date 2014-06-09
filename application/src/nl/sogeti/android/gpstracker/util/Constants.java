@@ -250,5 +250,6 @@ public class Constants
     * The track that is being logged
     */
    public static final String EXTRA_TRACK = "nl.sogeti.android.gpstracker.EXTRA_TRACK";
+   public static final String DRIVE_BACKUP = "DRIVE_BACKUP";
 
 }

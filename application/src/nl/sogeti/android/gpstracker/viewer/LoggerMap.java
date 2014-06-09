@@ -114,11 +114,13 @@ public class LoggerMap extends MapActivity
    private static final int MENU_NOTE = 7;
    private static final int MENU_SHARE = 13;
    private static final int MENU_CONTRIB = 14;
+   private static final int MENU_DRIVE = 15;
    private static final int DIALOG_NOTRACK = 24;
    private static final int DIALOG_INSTALL_ABOUT = 29;
    private static final int DIALOG_LAYERS = 31;
    private static final int DIALOG_URIS = 34;
    private static final int DIALOG_CONTRIB = 35;
+   private static final int DIALOG_DRIVE = 36;
    private static final String TAG = "OGT.LoggerMap";
    // UI's
    private CheckBox mTraffic;
@@ -152,6 +154,7 @@ public class LoggerMap extends MapActivity
    private ContentObserver mTrackMediasObserver;
    private DialogInterface.OnClickListener mNoTrackDialogListener;
    private DialogInterface.OnClickListener mOiAboutDialogListener;
+   private DialogInterface.OnClickListener mDriveDialogListener;
    private OnClickListener mNoteSelectDialogListener;
    private OnCheckedChangeListener mCheckedChangeListener;
    private android.widget.RadioGroup.OnCheckedChangeListener mGroupCheckedChangeListener;
@@ -252,6 +255,8 @@ public class LoggerMap extends MapActivity
       updateLocationDisplayVisibility();
 
       mMapView.executePostponedActions();
+
+      createDriveBackup();
    }
 
    @Override
@@ -434,6 +439,19 @@ public class LoggerMap extends MapActivity
       return propagate;
    }
 
+   private void createDriveBackup()
+   {
+      boolean madeChoice = mSharedPreferences.contains(Constants.DRIVE_BACKUP);
+      if (madeChoice)
+      {
+         boolean choice = mSharedPreferences.getBoolean(Constants.DRIVE_BACKUP, true);
+      }
+      else
+      {
+         showDialog(DIALOG_DRIVE);
+      }
+   }
+
    private void setTrafficOverlay(boolean b)
    {
       Editor editor = mSharedPreferences.edit();
@@ -548,16 +566,7 @@ public class LoggerMap extends MapActivity
       /*******************************************************
        * 8 Various dialog listeners
        */
-      mNoteSelectDialogListener = new DialogInterface.OnClickListener()
-         {
 
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-               Uri selected = (Uri) mGallery.getSelectedItem();
-               SegmentOverlay.handleMedia(LoggerMap.this, selected);
-            }
-         };
       mGroupCheckedChangeListener = new android.widget.RadioGroup.OnCheckedChangeListener()
          {
             @Override
@@ -641,6 +650,43 @@ public class LoggerMap extends MapActivity
                   oiDownload = Uri.parse("http://openintents.googlecode.com/files/AboutApp-1.0.0.apk");
                   oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
                   startActivity(oiAboutIntent);
+               }
+            }
+         };
+      mOiAboutDialogListener = new DialogInterface.OnClickListener()
+         {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+               Uri oiDownload = Uri.parse("market://details?id=org.openintents.about");
+               Intent oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
+               try
+               {
+                  startActivity(oiAboutIntent);
+               }
+               catch (ActivityNotFoundException e)
+               {
+                  oiDownload = Uri.parse("http://openintents.googlecode.com/files/AboutApp-1.0.0.apk");
+                  oiAboutIntent = new Intent(Intent.ACTION_VIEW, oiDownload);
+                  startActivity(oiAboutIntent);
+               }
+            }
+         };
+      mDriveDialogListener = new DialogInterface.OnClickListener()
+         {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+               switch (which)
+               {
+                  case DialogInterface.BUTTON_POSITIVE:
+                     mSharedPreferences.edit().putBoolean(Constants.DRIVE_BACKUP, true).apply();
+                     createDriveBackup();
+                     break;
+                  default:
+                     mSharedPreferences.edit().putBoolean(Constants.DRIVE_BACKUP, false).apply();
+                     break;
                }
             }
          };
@@ -781,7 +827,7 @@ public class LoggerMap extends MapActivity
       menu.add(ContextMenu.NONE, MENU_STATS, ContextMenu.NONE, R.string.menu_statistics).setIcon(R.drawable.ic_menu_picture).setAlphabeticShortcut('S');
       menu.add(ContextMenu.NONE, MENU_SHARE, ContextMenu.NONE, R.string.menu_shareTrack).setIcon(R.drawable.ic_menu_share).setAlphabeticShortcut('I');
       // More
-
+      menu.add(ContextMenu.NONE, MENU_DRIVE, ContextMenu.NONE, R.string.dialog_drivebackup).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('B');
       menu.add(ContextMenu.NONE, MENU_TRACKLIST, ContextMenu.NONE, R.string.menu_tracklist).setIcon(R.drawable.ic_menu_show_list).setAlphabeticShortcut('P');
       menu.add(ContextMenu.NONE, MENU_SETTINGS, ContextMenu.NONE, R.string.menu_settings).setIcon(R.drawable.ic_menu_preferences).setAlphabeticShortcut('C');
       menu.add(ContextMenu.NONE, MENU_ABOUT, ContextMenu.NONE, R.string.menu_about).setIcon(R.drawable.ic_menu_info_details).setAlphabeticShortcut('A');
@@ -838,6 +884,10 @@ public class LoggerMap extends MapActivity
             intent = new Intent(this, TrackList.class);
             intent.putExtra(Tracks._ID, this.mTrackId);
             startActivityForResult(intent, MENU_TRACKLIST);
+            break;
+         case MENU_DRIVE:
+            mSharedPreferences.edit().remove(Constants.DRIVE_BACKUP).apply();
+            createDriveBackup();
             break;
          case MENU_STATS:
             if (this.mTrackId >= 0)
@@ -955,6 +1005,12 @@ public class LoggerMap extends MapActivity
             TextView contribView = (TextView) view.findViewById(R.id.contrib_view);
             contribView.setText(R.string.dialog_contrib_message);
             builder.setTitle(R.string.dialog_contrib_title).setView(view).setIcon(android.R.drawable.ic_dialog_email).setPositiveButton(R.string.btn_okay, null);
+            dialog = builder.create();
+            return dialog;
+         case DIALOG_DRIVE:
+            builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.dialog_drivebackup).setMessage(R.string.dialog_drivebackup_message).setIcon(android.R.drawable.ic_dialog_alert)
+                  .setPositiveButton(android.R.string.yes, mDriveDialogListener).setNegativeButton(android.R.string.no, mDriveDialogListener);
             dialog = builder.create();
             return dialog;
          default:
