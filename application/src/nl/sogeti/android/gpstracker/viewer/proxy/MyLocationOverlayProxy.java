@@ -30,14 +30,14 @@ package nl.sogeti.android.gpstracker.viewer.proxy;
 
 import nl.sogeti.android.gpstracker.viewer.FixedMyLocationOverlay;
 
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
 import android.content.Context;
-import android.location.Location;
 import android.view.View;
 
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
-
 
 public class MyLocationOverlayProxy implements OverlayProxy
 {
@@ -45,11 +45,11 @@ public class MyLocationOverlayProxy implements OverlayProxy
    private static final String TAG = "OGT.MyLocationOverlayProxy";
 
    private MyLocationOverlay googleLocationOverlay;
-   private org.osmdroid.views.overlay.MyLocationOverlay osmLocationOverlay;
+   private MyLocationNewOverlay osmLocationOverlay;
    private Context mContext;
 
    private MapViewProxy mMapViewProxy;
-   
+
    public MyLocationOverlayProxy(Context ctx, MapViewProxy view)
    {
       mContext = ctx;
@@ -58,11 +58,11 @@ public class MyLocationOverlayProxy implements OverlayProxy
 
    public void enableMyLocation()
    {
-      if( googleLocationOverlay != null )
+      if (googleLocationOverlay != null)
       {
          googleLocationOverlay.enableMyLocation();
       }
-      if( osmLocationOverlay != null )
+      if (osmLocationOverlay != null)
       {
          osmLocationOverlay.enableMyLocation();
       }
@@ -70,40 +70,36 @@ public class MyLocationOverlayProxy implements OverlayProxy
 
    public void disableMyLocation()
    {
-      if( googleLocationOverlay != null )
+      if (googleLocationOverlay != null)
       {
          googleLocationOverlay.disableMyLocation();
       }
-      if( osmLocationOverlay != null )
+      if (osmLocationOverlay != null)
       {
          osmLocationOverlay.disableMyLocation();
-         osmLocationOverlay.onLocationChanged( new Location( "STUB" ) );
          mMapViewProxy.invalidate();
       }
    }
 
    public void enableCompass()
    {
-      if( googleLocationOverlay != null )
+      if (googleLocationOverlay != null)
       {
          googleLocationOverlay.enableCompass();
       }
-      if( osmLocationOverlay != null )
+      if (osmLocationOverlay != null)
       {
-         osmLocationOverlay.enableCompass();
       }
    }
 
    public void disableCompass()
    {
-      if( googleLocationOverlay != null )
+      if (googleLocationOverlay != null)
       {
          googleLocationOverlay.disableCompass();
       }
-      if( osmLocationOverlay != null )
+      if (osmLocationOverlay != null)
       {
-         osmLocationOverlay.disableCompass();
-         mMapViewProxy.invalidate();
       }
    }
 
@@ -111,7 +107,7 @@ public class MyLocationOverlayProxy implements OverlayProxy
    public Overlay getGoogleOverlay()
    {
       View mapview = mMapViewProxy.getMap();
-      googleLocationOverlay = new FixedMyLocationOverlay( mContext, (MapView) mapview );
+      googleLocationOverlay = new FixedMyLocationOverlay(mContext, (MapView) mapview);
       return googleLocationOverlay;
    }
 
@@ -119,7 +115,7 @@ public class MyLocationOverlayProxy implements OverlayProxy
    public org.osmdroid.views.overlay.Overlay getOSMOverlay()
    {
       View mapview = mMapViewProxy.getMap();
-      osmLocationOverlay = new org.osmdroid.views.overlay.MyLocationOverlay( mContext, (org.osmdroid.views.MapView) mapview );
+      osmLocationOverlay = new MyLocationNewOverlay(mContext, (org.osmdroid.views.MapView) mapview);
       return osmLocationOverlay;
    }
 

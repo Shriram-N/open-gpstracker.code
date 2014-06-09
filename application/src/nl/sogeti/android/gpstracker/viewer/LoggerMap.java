@@ -1465,7 +1465,7 @@ public class LoggerMap extends MapActivity
    }
 
    /**
-    * @param avgSpeed avgSpeed in m/s
+    * @param avgSpeed avgSpeed in m/sz
     */
    private void drawSpeedTexts(double avgSpeed)
    {

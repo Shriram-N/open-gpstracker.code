@@ -46,81 +46,84 @@ public class MapControllerProxy
    {
    }
 
-   
    public void setController(Object controller)
    {
-      if( controller instanceof org.osmdroid.views.MapView )
+      if (controller instanceof org.osmdroid.views.MapView)
       {
          mOpenStreetMapViewControllerSource = (org.osmdroid.views.MapView) controller;
          mMapController = null;
-      } else if( controller instanceof MapController )
+      }
+      else if (controller instanceof MapController)
       {
          mMapController = (MapController) controller;
          mOpenStreetMapViewControllerSource = null;
       }
    }
 
-   public void setZoom( int i )
+   public void setZoom(int i)
    {
-      if( mMapController != null )
+      if (mMapController != null)
       {
-         mMapController.setZoom( i );
+         mMapController.setZoom(i);
       }
-      else if( mOpenStreetMapViewControllerSource != null )
+      else if (mOpenStreetMapViewControllerSource != null)
       {
-         mOpenStreetMapViewControllerSource.getController().setZoom( i );
+         mOpenStreetMapViewControllerSource.getController().setZoom(i);
          mPostponedSetZoom = i;
       }
-      else 
+      else
       {
-         throw new IllegalStateException( "No working controller available" );
+         throw new IllegalStateException("No working controller available");
       }
    }
 
-   public void animateTo( GeoPoint point )
+   public void animateTo(GeoPoint point)
    {
-      if( point.getLatitudeE6() != 0 && point.getLongitudeE6() != 0 )
+      if (point.getLatitudeE6() != 0 && point.getLongitudeE6() != 0)
       {
-         if( mMapController != null )
+         if (mMapController != null)
          {
-            mMapController.animateTo( point );
+            mMapController.animateTo(point);
          }
-         else if( mOpenStreetMapViewControllerSource != null )
+         else if (mOpenStreetMapViewControllerSource != null)
          {
-            mOpenStreetMapViewControllerSource.getController().animateTo( new org.osmdroid.util.GeoPoint( point.getLatitudeE6(), point.getLongitudeE6() ) );
+            org.osmdroid.util.GeoPoint geoPoint = new org.osmdroid.util.GeoPoint(point.getLatitudeE6(), point.getLongitudeE6());
+            Log.d(TAG, "Animate to " + geoPoint);
+            mOpenStreetMapViewControllerSource.getController().animateTo(geoPoint);
             mPostponedSetCenterPoint = point;
          }
-         else 
+         else
          {
-            throw new IllegalStateException( "No working controller available" );
+            throw new IllegalStateException("No working controller available");
          }
       }
    }
 
-   public void setCenter( GeoPoint point )
+   public void setCenter(GeoPoint point)
    {
-      if( point.getLatitudeE6() != 0 && point.getLongitudeE6() != 0 )
+      if (point.getLatitudeE6() != 0 && point.getLongitudeE6() != 0)
       {
-         if( mMapController != null )
+         if (mMapController != null)
          {
-            mMapController.setCenter( point );
+            mMapController.setCenter(point);
          }
-         else if( mOpenStreetMapViewControllerSource != null )
+         else if (mOpenStreetMapViewControllerSource != null)
          {
-            mOpenStreetMapViewControllerSource.getController().setCenter( new org.osmdroid.util.GeoPoint( point.getLatitudeE6(), point.getLongitudeE6() ) );
+            org.osmdroid.util.GeoPoint geoPoint = new org.osmdroid.util.GeoPoint(point.getLatitudeE6(), point.getLongitudeE6());
+            Log.d(TAG, "Set Center to " + geoPoint);
+            mOpenStreetMapViewControllerSource.getController().setCenter(geoPoint);
             mPostponedSetCenterPoint = point;
          }
       }
    }
-
 
    public boolean zoomIn()
    {
-      if( mMapController != null )
+      if (mMapController != null)
       {
          return mMapController.zoomIn();
       }
-      if( mOpenStreetMapViewControllerSource != null )
+      if (mOpenStreetMapViewControllerSource != null)
       {
          return mOpenStreetMapViewControllerSource.getController().zoomIn();
       }
@@ -129,11 +132,11 @@ public class MapControllerProxy
 
    public boolean zoomOut()
    {
-      if( mMapController != null )
+      if (mMapController != null)
       {
          return mMapController.zoomOut();
       }
-      else if( mOpenStreetMapViewControllerSource != null )
+      else if (mOpenStreetMapViewControllerSource != null)
       {
          return mOpenStreetMapViewControllerSource.getController().zoomOut();
       }
@@ -142,16 +145,16 @@ public class MapControllerProxy
 
    public void executePostponedActions()
    {
-      if( mPostponedSetCenterPoint != null )
+      if (mPostponedSetCenterPoint != null)
       {
-         Log.w( TAG, "mPostponedSetCenterPoint"+ mPostponedSetCenterPoint);
-         setCenter( mPostponedSetCenterPoint );
+         Log.w(TAG, "mPostponedSetCenterPoint" + mPostponedSetCenterPoint);
+         setCenter(mPostponedSetCenterPoint);
          mPostponedSetCenterPoint = null;
       }
-      if( mPostponedSetZoom >= 0 )
+      if (mPostponedSetZoom >= 0)
       {
-         Log.w( TAG, "mPostponedSetZoom"+ mPostponedSetCenterPoint);
-         setZoom( mPostponedSetZoom );
+         Log.w(TAG, "mPostponedSetZoom" + mPostponedSetCenterPoint);
+         setZoom(mPostponedSetZoom);
          mPostponedSetZoom = -1;
       }
    }
