@@ -79,6 +79,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -179,6 +180,8 @@ public class LoggerMap extends MapActivity
    protected void onCreate(Bundle load)
    {
       super.onCreate(load);
+
+      getWindow().requestFeature(Window.FEATURE_PROGRESS);
 
       setContentView(R.layout.map);
       findViewById(R.id.mapScreen).setDrawingCacheEnabled(true);
@@ -772,6 +775,7 @@ public class LoggerMap extends MapActivity
             {
                DriveBackup backup = new DriveBackup(this);
                googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(backup).addOnConnectionFailedListener(backup).build();
+               backup.setGoogleApiClient(googleApiClient);
             }
             googleApiClient.connect();
          }
