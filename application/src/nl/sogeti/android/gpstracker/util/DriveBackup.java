@@ -110,7 +110,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
       Drive.DriveApi.getRootFolder(googleApiClient).listChildren(googleApiClient).setResultCallback(rootFileListing);
    }
 
-   private void retrieveCompletedBackups()
+   private void listCompletedBackups()
    {
       DriveFolder folder = Drive.DriveApi.getFolder(googleApiClient, backupFolderId);
       Query query = new Query.Builder().addFilter(Filters.eq(SearchableField.MIME_TYPE, MIME_TYPE)).build();
@@ -134,11 +134,13 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
             {
                trackId = cursor.getLong(0);
                name = cursor.getString(1);
-               if (!isStoredOnDrive(trackId, name))
+               String fileName = toDriveTitle(trackId, name);
+               if (!isStoredOnDrive(fileName))
                {
                   Uri trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, trackId);
-                  String fileName = toDriveTitle(trackId, name);
+                  Log.d(TAG, "Ready to backup " + fileName + " of " + trackUri);
                   new GpxCreator(activity, trackUri, fileName, true, this).execute();
+                  break;
                }
             }
             while (cursor.moveToNext());
@@ -158,27 +160,30 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
       Drive.DriveApi.newContents(googleApiClient).setResultCallback(new ContentsCreate());
    }
 
-   private String fileName(long trackId, String name)
+   private boolean isStoredOnDrive(String filename)
    {
-      return toDriveTitle(trackId, name);
-   }
-
-   private boolean isStoredOnDrive(long id, String name)
-   {
-      String title = fileName(id, name);
-      for (Metadata file : fileList)
+      boolean isStored = false;
+      String localTitle = GpxCreator.cleanFilename(filename, filename) + ".gpx";
+      for (Metadata remote : fileList)
       {
-         if (title.equals(file.getTitle()))
+         String remoteTitle = remote.getTitle();
+         if (localTitle.equals(remoteTitle))
          {
-            return true;
+            Log.d(TAG, "Found StoredOnDrive(local:'" + localTitle + "' remote '" + remoteTitle + "')");
+            isStored = true;
+            break;
          }
       }
-      return false;
+      if (!isStored)
+      {
+         Log.d(TAG, "Not found StoredOnDrive(local:'" + localTitle + "')");
+      }
+      return isStored;
    }
 
    private String toDriveTitle(long id, String name)
    {
-      return String.format("%d_%s", id, name);
+      return String.format("%d_%s", id, name.trim());
    }
 
    @Override
@@ -214,6 +219,13 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
    }
 
    @Override
+   public void onProgress(long bytesDownloaded, long bytesExpected)
+   {
+      int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
+      activity.setProgress(value);
+   }
+
+   @Override
    public void finished(Uri result)
    {
       Log.d(TAG, "finished(result" + result + ")");
@@ -229,13 +241,6 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
       //TODO continue
    }
 
-   @Override
-   public void onProgress(long arg0, long arg1)
-   {
-      // TODO Auto-generated method stub
-
-   }
-
    private class RootListingCallback implements ResultCallback<MetadataBufferResult>
    {
 
@@ -249,7 +254,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
                if (meta.isFolder() && meta.isEditable() && FOLDER_NAME.equals(meta.getTitle()))
                {
                   backupFolderId = meta.getDriveId();
-                  retrieveCompletedBackups();
+                  listCompletedBackups();
                   break;
                }
             }
@@ -279,7 +284,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
          if (result.getStatus().isSuccess())
          {
             backupFolderId = result.getDriveFolder().getDriveId();
-            retrieveCompletedBackups();
+            listCompletedBackups();
          }
          else
          {
@@ -304,6 +309,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
             Log.e(TAG, "Failed to list GPX files");
          }
          result.getMetadataBuffer().close();
+         fileList = null;
       }
 
    }
@@ -393,15 +399,13 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
             if (results.getStatus().isSuccess())
             {
                Log.e(TAG, "Succes with uploading... " + localFile.getLastPathSegment());
-               //TODO prep for next file 
-               //backupNextTrack();
+               listCompletedBackups();
             }
             else
             {
                Log.e(TAG, "Failed to close the file contents");
             }
          }
-
       }
 
       private void close(Closeable closeable)
