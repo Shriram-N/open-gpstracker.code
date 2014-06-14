@@ -70,6 +70,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -194,6 +195,7 @@ public class LoggerMap extends MapActivity
             @Override
             public void run()
             {
+               Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                Looper.prepare();
                mHandler = new Handler();
                calulatorSemaphore.release();
@@ -776,8 +778,12 @@ public class LoggerMap extends MapActivity
                DriveBackup backup = new DriveBackup(this);
                googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(backup).addOnConnectionFailedListener(backup).build();
                backup.setGoogleApiClient(googleApiClient);
+               googleApiClient.connect();
             }
-            googleApiClient.connect();
+            else
+            {
+               googleApiClient.reconnect();
+            }
          }
       }
       else
