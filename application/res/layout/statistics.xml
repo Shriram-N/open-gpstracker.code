@@ -127,30 +127,30 @@
          android:id="@+id/stat_ascension" />
    </TableRow>
 
-   <nl.sogeti.android.gpstracker.actions.utils.ViewFlipper 
+   <nl.sogeti.android.gpstracker.view.ViewFlipper 
         android:id="@+id/flipper"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content">
         
-      <nl.sogeti.android.gpstracker.actions.utils.GraphCanvas
+      <nl.sogeti.android.gpstracker.view.GraphCanvas
          android:id="@+id/graph_timespeed"
          android:layout_width="fill_parent"
          android:layout_height="wrap_content" />
          
-      <nl.sogeti.android.gpstracker.actions.utils.GraphCanvas
+      <nl.sogeti.android.gpstracker.view.GraphCanvas
          android:id="@+id/graph_distancespeed"
          android:layout_width="fill_parent"
          android:layout_height="wrap_content" />
          
-      <nl.sogeti.android.gpstracker.actions.utils.GraphCanvas
+      <nl.sogeti.android.gpstracker.view.GraphCanvas
          android:id="@+id/graph_timealtitude"
          android:layout_width="fill_parent"
          android:layout_height="wrap_content" />
          
-      <nl.sogeti.android.gpstracker.actions.utils.GraphCanvas
+      <nl.sogeti.android.gpstracker.view.GraphCanvas
          android:id="@+id/graph_distancealtitude"
          android:layout_width="fill_parent"
          android:layout_height="wrap_content" />
          
-   </nl.sogeti.android.gpstracker.actions.utils.ViewFlipper>
+   </nl.sogeti.android.gpstracker.view.ViewFlipper>
 </TableLayout>

@@ -32,9 +32,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import nl.sogeti.android.gpstracker.R;
-import nl.sogeti.android.gpstracker.actions.tasks.GpxParser;
-import nl.sogeti.android.gpstracker.breadcrumbs.BreadcrumbsService;
-import nl.sogeti.android.gpstracker.breadcrumbs.BreadcrumbsTracks;
+import nl.sogeti.android.gpstracker.model.BreadcrumbsTracks;
+import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
+import nl.sogeti.android.gpstracker.tasks.xml.GpxParser;
 import nl.sogeti.android.gpstracker.util.Constants;
 import nl.sogeti.android.gpstracker.util.Pair;
 import android.app.Activity;

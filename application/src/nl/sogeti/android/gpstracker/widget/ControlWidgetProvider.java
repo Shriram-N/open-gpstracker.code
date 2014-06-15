@@ -29,8 +29,8 @@
 package nl.sogeti.android.gpstracker.widget;
 
 import nl.sogeti.android.gpstracker.R;
-import nl.sogeti.android.gpstracker.actions.ControlTracking;
-import nl.sogeti.android.gpstracker.actions.InsertNote;
+import nl.sogeti.android.gpstracker.activity.ControlTracking;
+import nl.sogeti.android.gpstracker.activity.InsertNote;
 import nl.sogeti.android.gpstracker.util.Constants;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
