@@ -1,24 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<manifest 
-	xmlns:android="http://schemas.android.com/apk/res/android" 
-	package="nl.sogeti.android.gpstracker.tests">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="nl.sogeti.android.gpstracker.tests" >
 
-	<application>
-		<uses-library android:name="android.test.runner" />
-	</application>
+    <application>
+        <uses-library android:name="android.test.runner" />
 
-	<service android:enabled="true" android:name=".logger.MockGPSLoggerService">
-		<intent-filter android:label="Gps data generator">
-			<action android:name="MockGPSLoggerService"></action>
-		</intent-filter>
-	</service>
+        <service
+            android:name="nl.sogeti.android.gpstracker.tests.gpsmock.MockGPSLoggerService"
+            android:enabled="true" >
+            <intent-filter android:label="Gps data generator" >
+                <action android:name="MockGPSLoggerService" >
+                </action>
+            </intent-filter>
+        </service>
+    </application>
 
-	<instrumentation 
-		android:name="GPStrackingInstrumentation" 
-		android:label="GPS Tracker test suite"
-		android:targetPackage="nl.sogeti.android.gpstracker">
-	</instrumentation>
-	
-	<uses-sdk android:minSdkVersion="4"></uses-sdk>
+    <instrumentation
+        android:name="GPStrackingInstrumentation"
+        android:label="GPS Tracker test suite"
+        android:targetPackage="nl.sogeti.android.gpstracker" >
+    </instrumentation>
+
+    <uses-sdk
+        android:minSdkVersion="4"
+        android:targetSdkVersion="19" >
+    </uses-sdk>
 
 </manifest>

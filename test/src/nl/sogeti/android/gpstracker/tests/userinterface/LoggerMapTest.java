@@ -30,11 +30,11 @@ package nl.sogeti.android.gpstracker.tests.userinterface;
 
 import junit.framework.Assert;
 import nl.sogeti.android.gpstracker.R;
-import nl.sogeti.android.gpstracker.db.GPStracking.Tracks;
-import nl.sogeti.android.gpstracker.db.GPStracking.Waypoints;
-import nl.sogeti.android.gpstracker.logger.GPSLoggerServiceManager;
+import nl.sogeti.android.gpstracker.activity.LoggerMap;
+import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
+import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
+import nl.sogeti.android.gpstracker.service.logger.GPSLoggerServiceManager;
 import nl.sogeti.android.gpstracker.util.Constants;
-import nl.sogeti.android.gpstracker.viewer.LoggerMap;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;

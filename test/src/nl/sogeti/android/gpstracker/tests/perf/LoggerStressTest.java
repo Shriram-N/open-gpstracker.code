@@ -28,9 +28,9 @@
  */
 package nl.sogeti.android.gpstracker.tests.perf;
 
+import nl.sogeti.android.gpstracker.activity.LoggerMap;
 import nl.sogeti.android.gpstracker.tests.R;
 import nl.sogeti.android.gpstracker.tests.utils.MockGPSLoggerDriver;
-import nl.sogeti.android.gpstracker.viewer.LoggerMap;
 import android.os.Debug;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.PerformanceTestCase;
@@ -38,7 +38,7 @@ import android.test.suitebuilder.annotation.LargeTest;
 
 /**
  * Goal is to feed as the LoggerMap as many points as possible to give it a good workout.
- *
+ * 
  * @version $Id$
  * @author rene (c) Mar 15, 2009, Sogeti B.V.
  */
@@ -50,21 +50,21 @@ public class LoggerStressTest extends ActivityInstrumentationTestCase2<LoggerMap
 
    public LoggerStressTest()
    {
-      super( PACKAGE, CLASS );
+      super(PACKAGE, CLASS);
    }
 
    @Override
-   protected void setUp() throws Exception 
+   protected void setUp() throws Exception
    {
       super.setUp();
       getActivity();
-   }  
+   }
 
    protected void tearDown() throws Exception
    {
       super.tearDown();
    }
-   
+
    /**
     * Just pours a lot of tracking actions at the application
     * 
@@ -72,27 +72,28 @@ public class LoggerStressTest extends ActivityInstrumentationTestCase2<LoggerMap
     */
    @LargeTest
    public void testLapsAroundUtrecht() throws InterruptedException
-   {    
+   {
       // Our data feeder to the emulator
-      MockGPSLoggerDriver service = new MockGPSLoggerDriver( getInstrumentation().getContext(), R.xml.rondjesingelutrecht, 10 );
+      MockGPSLoggerDriver service = new MockGPSLoggerDriver(getInstrumentation().getContext(),
+            R.xml.rondjesingelutrecht, 10);
 
-      this.sendKeys( "T T T T" );
-      this.sendKeys( "MENU DPAD_RIGHT T T E S T R O U T E ENTER" );
-      this.sendKeys("ENTER" ); 
+      this.sendKeys("T T T T");
+      this.sendKeys("MENU DPAD_RIGHT T T E S T R O U T E ENTER");
+      this.sendKeys("ENTER");
 
       // Start method tracing for Issue 18
-      Debug.startMethodTracing("rondjesingelutrecht" );
-      if( this.mIntermediates != null )
+      Debug.startMethodTracing("rondjesingelutrecht");
+      if (this.mIntermediates != null)
       {
-         this.mIntermediates.startTiming( true ) ;
+         this.mIntermediates.startTiming(true);
       }
 
       service.run();
 
       // Start method tracing for Issue 18
-      if( this.mIntermediates != null )
+      if (this.mIntermediates != null)
       {
-         this.mIntermediates.finishTiming( true ) ;
+         this.mIntermediates.finishTiming(true);
       }
       Debug.stopMethodTracing();
    }
@@ -102,7 +103,7 @@ public class LoggerStressTest extends ActivityInstrumentationTestCase2<LoggerMap
       return true;
    }
 
-   public int startPerformance( Intermediates intermediates )
+   public int startPerformance(Intermediates intermediates)
    {
       this.mIntermediates = intermediates;
       return 1;
