@@ -81,14 +81,17 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    private Activity activity;
    private Handler handler;
 
-   public DriveBackupService()
-   {
-   }
-
    @Override
    public IBinder onBind(Intent intent)
    {
       return new LocalBinder();
+   }
+
+   @Override
+   public void onDestroy()
+   {
+      stopBackup();
+      super.onDestroy();
    }
 
    public void startBackup(Activity act)
@@ -126,9 +129,12 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
 
    public void stopBackup()
    {
-      this.activity = null;
-      this.googleApiClient.disconnect();
-      this.handler.post(new Runnable()
+      activity = null;
+      if (googleApiClient != null)
+      {
+         googleApiClient.disconnect();
+      }
+      handler.post(new Runnable()
          {
             @SuppressLint("NewApi")
             @Override

@@ -264,7 +264,7 @@ public class LoggerMap extends MapActivity implements Listener
 
       mMapView.executePostponedActions();
 
-      createDriveBackup();
+      coupleBackup();
    }
 
    @Override
@@ -285,6 +285,7 @@ public class LoggerMap extends MapActivity implements Listener
       mMylocation.disableCompass();
 
       this.mLoggerServiceManager.shutdown();
+      decoupleBackup();
 
       super.onPause();
    }
@@ -315,12 +316,6 @@ public class LoggerMap extends MapActivity implements Listener
          Log.w(this, "onDestroy(): Released lock to keep screen on!");
       }
       mUnits = null;
-      DriveBackupService service = driveBinder.getService();
-      if (service != null)
-      {
-         service.decoupleBackup();
-         driveBinder.endBind(this);
-      }
    }
 
    /*
@@ -525,7 +520,7 @@ public class LoggerMap extends MapActivity implements Listener
             break;
          case MENU_DRIVE:
             mSharedPreferences.edit().remove(Constants.DRIVE_BACKUP).apply();
-            createDriveBackup();
+            coupleBackup();
             break;
          case MENU_STATS:
             if (this.mTrackId >= 0)
@@ -756,7 +751,7 @@ public class LoggerMap extends MapActivity implements Listener
          case DIALOG_DRIVE:
             if (resultCode == RESULT_OK)
             {
-               createDriveBackup();
+               coupleBackup();
             }
             break;
          default:
@@ -765,7 +760,7 @@ public class LoggerMap extends MapActivity implements Listener
       }
    }
 
-   private void createDriveBackup()
+   private void coupleBackup()
    {
       boolean madeChoice = mSharedPreferences.contains(Constants.DRIVE_BACKUP);
       if (madeChoice)
@@ -790,10 +785,20 @@ public class LoggerMap extends MapActivity implements Listener
       }
    }
 
+   private void decoupleBackup()
+   {
+      DriveBackupService service = driveBinder.getService();
+      if (service != null)
+      {
+         service.decoupleBackup();
+         driveBinder.endBind(this);
+      }
+   }
+
    @Override
    public void didBindService(DriveBackupService service)
    {
-      createDriveBackup();
+      coupleBackup();
    }
 
    private void setTrafficOverlay(boolean b)
@@ -1026,7 +1031,7 @@ public class LoggerMap extends MapActivity implements Listener
                {
                   case DialogInterface.BUTTON_POSITIVE:
                      mSharedPreferences.edit().putBoolean(Constants.DRIVE_BACKUP, true).apply();
-                     createDriveBackup();
+                     coupleBackup();
                      break;
                   default:
                      mSharedPreferences.edit().putBoolean(Constants.DRIVE_BACKUP, false).apply();
