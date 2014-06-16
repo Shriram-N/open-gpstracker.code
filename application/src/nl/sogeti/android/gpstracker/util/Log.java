@@ -12,13 +12,7 @@
  */
 package nl.sogeti.android.gpstracker.util;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
-
 import nl.sogeti.android.gpstracker.BuildConfig;
-import android.content.Context;
 import android.text.TextUtils;
 
 /**
@@ -29,6 +23,7 @@ import android.text.TextUtils;
 public class Log
 {
    public static final boolean DEBUG = BuildConfig.DEBUG;
+   private static final boolean THREAD = true;
 
    private static String getTag(Object tag)
    {
@@ -61,11 +56,22 @@ public class Log
       return tagName;
    }
 
+   private static String pimp(String msg)
+   {
+      if (THREAD)
+      {
+         msg = Thread.currentThread().getName() + " : " + msg;
+      }
+
+      return msg;
+   }
+
    public static void v(Object tag, String msg)
    {
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.v((String) tag, msg);
       }
    }
@@ -75,6 +81,7 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.d((String) tag, msg);
       }
    }
@@ -84,6 +91,7 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.i((String) tag, msg);
       }
    }
@@ -93,6 +101,7 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.w((String) tag, msg);
       }
    }
@@ -102,6 +111,7 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.e((String) tag, msg, e);
       }
    }
@@ -111,6 +121,7 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.e((String) tag, msg);
       }
    }
@@ -120,24 +131,8 @@ public class Log
       if (DEBUG)
       {
          tag = getTag(tag);
+         msg = pimp(msg);
          android.util.Log.e((String) tag, msg, e);
       }
-   }
-
-   /**
-    * When DEBUG is set to true formats the calendar into date time string.
-    * 
-    * @return the date-time text or empty string
-    */
-   public static String formatData(Context ctx, Calendar cal)
-   {
-      String dateTime = "";
-      if (DEBUG && cal != null)
-      {
-         DateFormat formatter = SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.getDefault());
-         String tz = cal.getTimeZone().getID();
-         dateTime = formatter.format(cal.getTime()) + "-" + tz;
-      }
-      return dateTime;
    }
 }

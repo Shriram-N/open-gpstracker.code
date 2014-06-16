@@ -23,6 +23,7 @@ import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
 import nl.sogeti.android.gpstracker.util.Log;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Service;
 import android.content.ContentUris;
@@ -31,8 +32,12 @@ import android.content.IntentSender;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -74,6 +79,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    private Uri localFile;
    private DriveFile remoteFile;
    private Activity activity;
+   private Handler handler;
 
    public DriveBackupService()
    {
@@ -85,12 +91,59 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       return new LocalBinder();
    }
 
-   public class LocalBinder extends Binder
+   public void startBackup(Activity act)
    {
-      DriveBackupService getService()
+      this.activity = act;
+      if (googleApiClient == null)
       {
-         return DriveBackupService.this;
+         HandlerThread thread = new HandlerThread("DriveBackupService", android.os.Process.THREAD_PRIORITY_BACKGROUND);
+         thread.start();
+         handler = new Handler(thread.getLooper());
+         //@formatter:off
+         googleApiClient = new GoogleApiClient.Builder(this)
+            .addApi(Drive.API)
+            .addScope(Drive.SCOPE_FILE)
+            .addConnectionCallbacks(this)
+            .addOnConnectionFailedListener(this)
+            .setHandler(handler)
+            .build();
+         //@formatter:on
       }
+      if (googleApiClient.isConnected())
+      {
+         getBackupFolder();
+      }
+      else
+      {
+         googleApiClient.connect();
+      }
+   }
+
+   public void decoupleBackup()
+   {
+      this.activity = null;
+   }
+
+   public void stopBackup()
+   {
+      this.activity = null;
+      this.googleApiClient.disconnect();
+      this.handler.post(new Runnable()
+         {
+            @SuppressLint("NewApi")
+            @Override
+            public void run()
+            {
+               if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2)
+               {
+                  Looper.myLooper().quitSafely();
+               }
+               else
+               {
+                  Looper.myLooper().quit();
+               }
+            }
+         });
    }
 
    @Override
@@ -125,34 +178,6 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    {
       Log.d(this, "Stop backup");
       stopBackup();
-   }
-
-   public void startBackup(Activity act)
-   {
-      this.activity = act;
-      if (googleApiClient == null)
-      {
-         googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
-      }
-      if (googleApiClient.isConnected())
-      {
-         getBackupFolder();
-      }
-      else
-      {
-         googleApiClient.connect();
-      }
-   }
-
-   public void decoupleBackup()
-   {
-      this.activity = null;
-   }
-
-   public void stopBackup()
-   {
-      this.activity = null;
-      this.googleApiClient.disconnect();
    }
 
    private void getBackupFolder()
@@ -476,4 +501,13 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
       }
    }
+
+   public class LocalBinder extends Binder
+   {
+      DriveBackupService getService()
+      {
+         return DriveBackupService.this;
+      }
+   }
+
 }
