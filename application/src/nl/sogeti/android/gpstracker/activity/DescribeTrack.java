@@ -36,6 +36,7 @@ import nl.sogeti.android.gpstracker.model.BreadcrumbsTracks;
 import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
 import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService.LocalBinder;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -54,7 +55,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -74,8 +74,6 @@ import android.widget.SpinnerAdapter;
 public class DescribeTrack extends Activity
 {
    private static final int DIALOG_TRACKDESCRIPTION = 42;
-
-   protected static final String TAG = "OGT.DescribeTrack";
 
    private static final String ACTIVITY_ID = "ACTIVITY_ID";
 
@@ -129,7 +127,7 @@ public class DescribeTrack extends Activity
       }
       else
       {
-         Log.e(TAG, "Describing track without a track URI supplied.");
+         Log.e(this, "Describing track without a track URI supplied.");
          finish();
       }
    }
@@ -334,7 +332,7 @@ public class DescribeTrack extends Activity
             {
                case DialogInterface.BUTTON_POSITIVE:
                   Uri metadataUri = Uri.withAppendedPath(mTrackUri, "metadata");
-                  Pair<Integer, Integer> selectedActivity = (Pair<Integer, Integer>)mActivitySpinner.getSelectedItem();
+                  Pair<Integer, Integer> selectedActivity = (Pair<Integer, Integer>) mActivitySpinner.getSelectedItem();
                   Pair<Integer, Integer> selectedBundle = (Pair<Integer, Integer>) mBundleSpinner.getSelectedItem();
                   if (selectedActivity != null && selectedBundle != null)
                   {
@@ -358,7 +356,7 @@ public class DescribeTrack extends Activity
                case DialogInterface.BUTTON_NEGATIVE:
                   break;
                default:
-                  Log.e(TAG, "Unknown option ending dialog:" + which);
+                  Log.e(this, "Unknown option ending dialog:" + which);
                   break;
             }
             finish();

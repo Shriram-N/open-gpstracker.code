@@ -32,15 +32,14 @@ import nl.sogeti.android.gpstracker.BuildConfig;
 import nl.sogeti.android.gpstracker.broadcast.CustomUpload;
 import nl.sogeti.android.gpstracker.broadcast.VoiceOver;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class StreamUtils
 {
    private static final boolean DEBUG = BuildConfig.DEBUG && false;
-   private static final String TAG = "OGT.StreamUtils";
 
    /**
     * Initialize all appropriate stream listeners
@@ -51,7 +50,7 @@ public class StreamUtils
    {
       if (DEBUG)
       {
-         Log.d(TAG, "initStreams(Context)");
+         Log.d(StreamUtils.class, "initStreams(Context)");
       }
       SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(ctx);
       boolean streams_enabled = sharedPreferences.getBoolean(Constants.BROADCAST_STREAM, false);
@@ -74,7 +73,7 @@ public class StreamUtils
    {
       if (DEBUG)
       {
-         Log.d(TAG, "shutdownStreams(Context)");
+         Log.d(StreamUtils.class, "shutdownStreams(Context)");
       }
       VoiceOver.shutdownStreaming(ctx);
       CustomUpload.shutdownStreaming(ctx);

@@ -28,16 +28,14 @@
  */
 package nl.sogeti.android.gpstracker.activity.mapproxy;
 
+import nl.sogeti.android.gpstracker.util.Log;
 import android.graphics.Point;
-import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.Projection;
 
 public class ProjectionProxy
 {
-
-   private static final String TAG = "OGT.ProjectionProxy";
 
    private Projection mProjection;
    private org.osmdroid.views.MapView mOpenStreetMapViewProjectionSource;
@@ -70,7 +68,7 @@ public class ProjectionProxy
          }
          catch (NullPointerException e)
          {
-            Log.w(TAG, "Problem using the Google map projection");
+            Log.w(this, "Problem using the Google map projection");
          }
       }
       else if (mOpenStreetMapViewProjectionSource != null)

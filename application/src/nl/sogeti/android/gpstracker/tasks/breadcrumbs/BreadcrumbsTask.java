@@ -33,11 +33,11 @@ import java.util.concurrent.Executor;
 import nl.sogeti.android.gpstracker.model.BreadcrumbsTracks;
 import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.util.Log;
 
 /**
  * ????
@@ -47,7 +47,6 @@ import android.util.Log;
  */
 public abstract class BreadcrumbsTask extends AsyncTask<Void, Void, Void>
 {
-   private static final String TAG = "OGT.BreadcrumbsTask";
 
    private ProgressListener mListener;
    private String mErrorText;
@@ -81,7 +80,7 @@ public abstract class BreadcrumbsTask extends AsyncTask<Void, Void, Void>
 
    protected void handleError(String task, Exception e, String text)
    {
-      Log.e(TAG, "Received error will cancel background task " + this.getClass().getName(), e);
+      Log.e(this, "Received error will cancel background task " + this.getClass().getName(), e);
 
       mService.removeAuthentication();
       mTask = task;
@@ -125,11 +124,11 @@ public abstract class BreadcrumbsTask extends AsyncTask<Void, Void, Void>
       }
       else if (mException != null)
       {
-         Log.e(TAG, "Incomplete error after cancellation:" + mErrorText, mException);
+         Log.e(this, "Incomplete error after cancellation:" + mErrorText, mException);
       }
       else
       {
-         Log.e(TAG, "Incomplete error after cancellation:" + mErrorText);
+         Log.e(this, "Incomplete error after cancellation:" + mErrorText);
       }
    }
 }

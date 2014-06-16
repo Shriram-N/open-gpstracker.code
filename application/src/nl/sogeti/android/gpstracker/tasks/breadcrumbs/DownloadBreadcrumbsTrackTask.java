@@ -43,6 +43,7 @@ import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxParser;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -53,7 +54,6 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
-import android.util.Log;
 
 /**
  * An asynchronous task that communicates with Twitter to retrieve a request token. (OAuthGetRequestToken) After receiving the request token from Twitter, pop a browser to the user to authorize the
@@ -62,7 +62,6 @@ import android.util.Log;
 public class DownloadBreadcrumbsTrackTask extends GpxParser
 {
 
-   final String TAG = "OGT.GetBreadcrumbsTracksTask";
    private BreadcrumbsService mAdapter;
    private OAuthConsumer mConsumer;
    private Pair<Integer, Integer> mTrack;
@@ -97,12 +96,12 @@ public class DownloadBreadcrumbsTrackTask extends GpxParser
          mConsumer.sign(connection);
          if (BreadcrumbsAdapter.DEBUG)
          {
-            Log.d(TAG, "Execute request: " + request);
+            Log.d(this, "Execute request: " + request);
          }
          InputStream stream = connection.getInputStream();
          if (BreadcrumbsAdapter.DEBUG)
          {
-            stream = XmlCreator.convertStreamToLoggedStream(TAG, stream);
+            stream = XmlCreator.convertStreamToLoggedStream(stream);
          }
          trackUri = importTrack(stream, trackName);
       }

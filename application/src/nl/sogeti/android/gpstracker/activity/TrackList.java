@@ -39,6 +39,7 @@ import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService.Local
 import nl.sogeti.android.gpstracker.tasks.xml.GpxParser;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -60,7 +61,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -86,7 +86,6 @@ import android.widget.TextView;
 public class TrackList extends ListActivity implements ProgressListener
 {
 
-   private static final String TAG = "OGT.TrackList";
    private static final int MENU_DETELE = Menu.FIRST + 0;
    private static final int MENU_SHARE = Menu.FIRST + 1;
    private static final int MENU_RENAME = Menu.FIRST + 2;
@@ -369,16 +368,15 @@ public class TrackList extends ListActivity implements ProgressListener
       }
       catch (ClassCastException e)
       {
-         Log.e(TAG, "Bad menuInfo", e);
+         Log.e(this, "Bad menuInfo", e);
          return handled;
       }
 
       Object listItem = getListAdapter().getItem(info.position);
       if (listItem instanceof Cursor)
       {
-         Cursor cursor = (Cursor) listItem;
-         mDialogTrackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, cursor.getLong(0));
-         mDialogCurrentName = cursor.getString(1);
+         mDialogTrackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, ((Cursor) listItem).getLong(0));
+         mDialogCurrentName = ((Cursor) listItem).getString(1);
          mDialogCurrentName = mDialogCurrentName != null ? mDialogCurrentName : "";
          switch (item.getItemId())
          {
@@ -588,7 +586,7 @@ public class TrackList extends ListActivity implements ProgressListener
          }
          else
          {
-            Log.e(TAG, "Unable to VIEW " + uri);
+            Log.e(this, "Unable to VIEW " + uri);
          }
       }
       else
@@ -739,7 +737,7 @@ public class TrackList extends ListActivity implements ProgressListener
       mErrorTask = task;
       mErrorDialogMessage = errorDialogMessage;
       mErrorDialogException = errorDialogException;
-      Log.e(TAG, errorDialogMessage, errorDialogException);
+      Log.e(this, errorDialogMessage, errorDialogException);
       if (!isFinishing())
       {
          showDialog(DIALOG_ERROR);
@@ -780,7 +778,7 @@ public class TrackList extends ListActivity implements ProgressListener
          @Override
          public void onClick(DialogInterface dialog, int which)
          {
-            //         Log.d( TAG, "Context item selected: "+mDialogUri+" with name "+mDialogCurrentName );
+            //         Log.d( this, "Context item selected: "+mDialogUri+" with name "+mDialogCurrentName );
 
             String trackName = mTrackNameView.getText().toString();
             ContentValues values = new ContentValues();

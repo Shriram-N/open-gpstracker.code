@@ -50,6 +50,7 @@ import nl.sogeti.android.gpstracker.content.GPStracking.Media;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import org.xmlpull.v1.XmlSerializer;
 
@@ -62,7 +63,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
-import android.util.Log;
 import android.view.Window;
 
 /**
@@ -73,7 +73,6 @@ import android.view.Window;
  */
 public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
 {
-   private String TAG = "OGT.XmlCreator";
    private String mExportDirectoryPath;
    private boolean mNeedsBundling;
 
@@ -176,7 +175,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
       }
       else
       {
-         Log.w(TAG, "Exporting " + mTrackUri + " without progress!");
+         Log.w(this, "Exporting " + mTrackUri + " without progress!");
       }
    }
 
@@ -214,7 +213,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
       File source = new File(inputFilePath);
       File target = new File(mExportDirectoryPath + "/" + source.getName());
 
-      //      Log.d( TAG, String.format( "Copy %s to %s", source, target ) ); 
+      //      Log.d( this, String.format( "Copy %s to %s", source, target ) ); 
       if (source.exists())
       {
          FileInputStream fileInputStream = new FileInputStream(source);
@@ -239,7 +238,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
       }
       else
       {
-         Log.w(TAG, "Failed to add file to new XML export. Missing: " + inputFilePath);
+         Log.w(this, "Failed to add file to new XML export. Missing: " + inputFilePath);
       }
       mProgressAdmin.addMediaProgress();
 
@@ -391,7 +390,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
       return result;
    }
 
-   public static InputStream convertStreamToLoggedStream(String tag, InputStream is) throws IOException
+   public static InputStream convertStreamToLoggedStream(InputStream is) throws IOException
    {
       String result = "";
       /*
@@ -426,7 +425,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
 
    protected void handleError(String task, Exception e, String text)
    {
-      Log.e(TAG, "Unable to save ", e);
+      Log.e(this, "Unable to save ", e);
       mTask = task;
       mException = e;
       mErrorText = text;
@@ -547,7 +546,7 @@ public abstract class XmlCreator extends AsyncTask<Void, Integer, Uri>
          {
             progress = 0;
          }
-         //Log.d( TAG, "Progress updated to "+progress);
+         //Log.d( this, "Progress updated to "+progress);
          return progress;
       }
 

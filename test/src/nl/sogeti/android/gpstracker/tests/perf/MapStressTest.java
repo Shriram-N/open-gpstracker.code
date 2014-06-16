@@ -35,6 +35,7 @@ import java.util.StringTokenizer;
 import nl.sogeti.android.gpstracker.activity.LoggerMap;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -47,8 +48,6 @@ import android.os.Debug;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.PerformanceTestCase;
 import android.test.suitebuilder.annotation.LargeTest;
-import android.util.Log;
-
 /**
  * Goal is to feed as the LoggerMap as many points as possible to give it a good workout.
  * 
@@ -59,7 +58,6 @@ public class MapStressTest extends ActivityInstrumentationTestCase2<LoggerMap> i
 {
    private static final Class<LoggerMap> CLASS = LoggerMap.class;
    private static final String PACKAGE = "nl.sogeti.android.gpstracker";
-   private static final String TAG = "OGT.MapStressTest";
    private Intermediates mIntermediates;
 
    public MapStressTest()
@@ -118,7 +116,7 @@ public class MapStressTest extends ActivityInstrumentationTestCase2<LoggerMap> i
                while (tokizer.hasMoreTokens())
                {
                   waypoint = tokizer.nextToken();
-                  Log.d(TAG, "Insert waypoint: " + waypoint);
+                  Log.d(this, "Insert waypoint: " + waypoint);
                   tuple = waypoint.split(",");
                   wp.put(Waypoints.LONGITUDE, new Double(tuple[0]));
                   wp.put(Waypoints.LATITUDE, new Double(tuple[1]));
@@ -199,7 +197,7 @@ public class MapStressTest extends ActivityInstrumentationTestCase2<LoggerMap> i
          this.mIntermediates.finishTiming(true);
       }
       Debug.stopMethodTracing();
-      Log.d(TAG, "Completed actions: " + actions);
+      Log.d(this, "Completed actions: " + actions);
    }
 
    public boolean isPerformanceOnly()

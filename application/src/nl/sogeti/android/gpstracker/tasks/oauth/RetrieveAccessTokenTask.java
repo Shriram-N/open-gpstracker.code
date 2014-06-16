@@ -28,6 +28,7 @@
  */
 package nl.sogeti.android.gpstracker.tasks.oauth;
 
+import nl.sogeti.android.gpstracker.util.Log;
 import oauth.signpost.OAuth;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
@@ -36,11 +37,9 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Log;
 
 public class RetrieveAccessTokenTask extends AsyncTask<Uri, Void, Void>
 {
-   private static final String TAG = "OGT.RetrieveAccessTokenTask";
    private OAuthProvider provider;
    private OAuthConsumer consumer;
    private SharedPreferences prefs;
@@ -74,13 +73,13 @@ public class RetrieveAccessTokenTask extends AsyncTask<Uri, Void, Void>
          edit.putString(mSecretKey, consumer.getTokenSecret());
          edit.commit();
 
-         Log.i(TAG, "OAuth - Access Token Retrieved and stored to " + mTokenKey + " and " + mSecretKey);
-         Log.i(TAG, "OAuth - Consumer token '" + consumer.getToken() + "'");
-         Log.i(TAG, "OAuth - Consumer secret '" + consumer.getTokenSecret() + "'");
+         Log.i(this, "OAuth - Access Token Retrieved and stored to " + mTokenKey + " and " + mSecretKey);
+         Log.i(this, "OAuth - Consumer token '" + consumer.getToken() + "'");
+         Log.i(this, "OAuth - Consumer secret '" + consumer.getTokenSecret() + "'");
       }
       catch (Exception e)
       {
-         Log.e(TAG, "OAuth - Access Token Retrieval Error", e);
+         Log.e(this, "OAuth - Access Token Retrieval Error", e);
       }
 
       return null;

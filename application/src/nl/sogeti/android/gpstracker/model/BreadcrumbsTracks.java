@@ -49,11 +49,11 @@ import java.util.Set;
 import nl.sogeti.android.gpstracker.adapter.BreadcrumbsAdapter;
 import nl.sogeti.android.gpstracker.content.GPStracking.MetaData;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 
 /**
  * Model containing agregrated data retrieved from the GoBreadcrumbs.com API
@@ -90,8 +90,6 @@ public class BreadcrumbsTracks extends Observable
    public static final String TOTALDISTANCE = "TOTALDISTANCE";
 
    public static final String TOTALTIME = "TOTALTIME";
-
-   private static final String TAG = "OGT.BreadcrumbsTracks";
 
    private static final Integer CACHE_VERSION = Integer.valueOf(3);
    private static final String BREADCRUMSB_BUNDLES_CACHE_FILE = "breadcrumbs_bundles_cache.data";
@@ -156,7 +154,7 @@ public class BreadcrumbsTracks extends Observable
    {
       if (BreadcrumbsAdapter.DEBUG)
       {
-         Log.d(TAG, "addActivity(Integer " + activityId + " String " + activityName + ")");
+         Log.d(this, "addActivity(Integer " + activityId + " String " + activityName + ")");
       }
       if (!sActivityMappings.containsKey(activityId))
       {
@@ -179,7 +177,7 @@ public class BreadcrumbsTracks extends Observable
    {
       if (BreadcrumbsAdapter.DEBUG)
       {
-         Log.d(TAG, "addBundle(Integer " + bundleId + ", String " + bundleName + ", String " + bundleDescription + ")");
+         Log.d(this, "addBundle(Integer " + bundleId + ", String " + bundleName + ", String " + bundleDescription + ")");
       }
       if (!sBundleMappings.containsKey(bundleId))
       {
@@ -217,7 +215,7 @@ public class BreadcrumbsTracks extends Observable
    {
       if (BreadcrumbsAdapter.DEBUG)
       {
-         Log.d(TAG, "addTrack(Integer " + trackId + ", String " + trackName + ", Integer " + bundleId + "...");
+         Log.d(this, "addTrack(Integer " + trackId + ", String " + trackName + ", Integer " + bundleId + "...");
       }
       if (!sBundlesWithTracks.containsKey(bundleId))
       {
@@ -467,7 +465,7 @@ public class BreadcrumbsTracks extends Observable
                   }
                   catch (NumberFormatException e)
                   {
-                     Log.w(TAG, "Illigal value stored as track id", e);
+                     Log.w(this, "Illigal value stored as track id", e);
                   }
                }
                while (cursor.moveToNext());
@@ -559,12 +557,12 @@ public class BreadcrumbsTracks extends Observable
          catch (OptionalDataException e)
          {
             clearPersistentCache(ctx);
-            Log.w(TAG, "Unable to read persisted breadcrumbs cache", e);
+            Log.w(this, "Unable to read persisted breadcrumbs cache", e);
          }
          catch (ClassNotFoundException e)
          {
             clearPersistentCache(ctx);
-            Log.w(TAG, "Unable to read persisted breadcrumbs cache", e);
+            Log.w(this, "Unable to read persisted breadcrumbs cache", e);
          }
          catch (IOException e)
          {
@@ -573,12 +571,12 @@ public class BreadcrumbsTracks extends Observable
          catch (ClassCastException e)
          {
             clearPersistentCache(ctx);
-            Log.w(TAG, "Unable to read persisted breadcrumbs cache", e);
+            Log.w(this, "Unable to read persisted breadcrumbs cache", e);
          }
          catch (ArrayIndexOutOfBoundsException e)
          {
             clearPersistentCache(ctx);
-            Log.w(TAG, "Unable to read persisted breadcrumbs cache", e);
+            Log.w(this, "Unable to read persisted breadcrumbs cache", e);
          }
          finally
          {
@@ -590,7 +588,7 @@ public class BreadcrumbsTracks extends Observable
                }
                catch (IOException e)
                {
-                  Log.w(TAG, "Error closing file stream after reading cache", e);
+                  Log.w(this, "Error closing file stream after reading cache", e);
                }
             }
             if (ois != null)
@@ -601,7 +599,7 @@ public class BreadcrumbsTracks extends Observable
                }
                catch (IOException e)
                {
-                  Log.w(TAG, "Error closing object stream after reading cache", e);
+                  Log.w(this, "Error closing object stream after reading cache", e);
                }
             }
          }
@@ -640,11 +638,11 @@ public class BreadcrumbsTracks extends Observable
          }
          catch (FileNotFoundException e)
          {
-            Log.e(TAG, "Error in file stream during persist cache", e);
+            Log.e(this, "Error in file stream during persist cache", e);
          }
          catch (IOException e)
          {
-            Log.e(TAG, "Error in object stream during persist cache", e);
+            Log.e(this, "Error in object stream during persist cache", e);
          }
          finally
          {
@@ -656,7 +654,7 @@ public class BreadcrumbsTracks extends Observable
                }
                catch (IOException e)
                {
-                  Log.w(TAG, "Error closing file stream after writing cache", e);
+                  Log.w(this, "Error closing file stream after writing cache", e);
                }
             }
             if (oos != null)
@@ -667,7 +665,7 @@ public class BreadcrumbsTracks extends Observable
                }
                catch (IOException e)
                {
-                  Log.w(TAG, "Error closing object stream after writing cache", e);
+                  Log.w(this, "Error closing object stream after writing cache", e);
                }
             }
          }
@@ -684,7 +682,7 @@ public class BreadcrumbsTracks extends Observable
 
    public void clearPersistentCache(Context ctx)
    {
-      Log.w(TAG, "Deleting old Breadcrumbs cache files");
+      Log.w(this, "Deleting old Breadcrumbs cache files");
       synchronized (BREADCRUMSB_BUNDLES_CACHE_FILE)
       {
          ctx.deleteFile(BREADCRUMSB_ACTIVITY_CACHE_FILE);

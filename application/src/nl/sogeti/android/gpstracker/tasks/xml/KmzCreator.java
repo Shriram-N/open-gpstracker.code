@@ -45,6 +45,7 @@ import nl.sogeti.android.gpstracker.content.GPStracking.Segments;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import org.xmlpull.v1.XmlSerializer;
 
@@ -53,7 +54,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore.MediaColumns;
-import android.util.Log;
 import android.util.Xml;
 
 /**
@@ -72,8 +72,6 @@ public class KmzCreator extends XmlCreator
       TimeZone utc = TimeZone.getTimeZone("UTC");
       ZULU_DATE_FORMATER.setTimeZone(utc); // ZULU_DATE_FORMAT format ends with Z for UTC so make that true
    }
-
-   private String TAG = "OGT.KmzCreator";
 
    public KmzCreator(Context context, Uri trackUri, String chosenFileName, ProgressListener listener)
    {
@@ -150,7 +148,7 @@ public class KmzCreator extends XmlCreator
             }
             catch (IOException e)
             {
-               Log.e(TAG, "Failed to close buf after completion, ignoring.", e);
+               Log.e(this, "Failed to close buf after completion, ignoring.", e);
             }
          }
          if (fos != null)
@@ -161,7 +159,7 @@ public class KmzCreator extends XmlCreator
             }
             catch (IOException e)
             {
-               Log.e(TAG, "Failed to close fos after completion, ignoring.", e);
+               Log.e(this, "Failed to close fos after completion, ignoring.", e);
             }
          }
       }

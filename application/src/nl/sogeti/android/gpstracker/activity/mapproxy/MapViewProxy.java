@@ -32,13 +32,13 @@ import java.util.List;
 import java.util.Vector;
 
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
-import android.util.Log;
 import android.view.View;
 
 import com.google.android.maps.GeoPoint;
@@ -46,7 +46,6 @@ import com.google.android.maps.MapView;
 
 public class MapViewProxy
 {
-   private static final String TAG = "OGT.MapViewProxy";
    private MapView mGoogleMapView;
    private MapControllerProxy mMapControllerProxy;
    private ProjectionProxy mProjectionProxy;
@@ -101,7 +100,7 @@ public class MapViewProxy
       }
       else
       {
-         Log.e(TAG, "Unusable map provided: " + newView);
+         Log.e(this, "Unusable map provided: " + newView);
          throw new IllegalStateException("Unusable map provided");
       }
       setBuiltInZoomControls(buildinzoom);

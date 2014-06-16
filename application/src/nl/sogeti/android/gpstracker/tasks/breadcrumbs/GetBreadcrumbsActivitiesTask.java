@@ -40,6 +40,7 @@ import nl.sogeti.android.gpstracker.model.BreadcrumbsTracks;
 import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -51,7 +52,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.content.Context;
-import android.util.Log;
 
 /**
  * An asynchronous task that communicates with Twitter to retrieve a request token. (OAuthGetRequestToken) After receiving the request token from Twitter, pop a browser to the user to authorize the
@@ -61,7 +61,6 @@ public class GetBreadcrumbsActivitiesTask extends BreadcrumbsTask
 {
 
    private LinkedList<Pair<Integer, String>> mActivities;
-   final String TAG = "OGT.GetBreadcrumbsActivitiesTask";
    private OAuthConsumer mConsumer;
 
    public GetBreadcrumbsActivitiesTask(Context context, BreadcrumbsService adapter, ProgressListener listener, OAuthConsumer consumer)
@@ -89,15 +88,15 @@ public class GetBreadcrumbsActivitiesTask extends BreadcrumbsTask
          connection.setDoOutput(false);
          connection.setDoInput(true);
          mConsumer.sign(connection);
-         Log.d(TAG, connection.getRequestProperties().toString());
+         Log.d(this, connection.getRequestProperties().toString());
          if (BreadcrumbsAdapter.DEBUG)
          {
-            Log.d(TAG, "Execute request: " + request);
+            Log.d(this, "Execute request: " + request);
          }
          InputStream stream = connection.getInputStream();
          if (BreadcrumbsAdapter.DEBUG)
          {
-            stream = XmlCreator.convertStreamToLoggedStream(TAG, stream);
+            stream = XmlCreator.convertStreamToLoggedStream(stream);
          }
 
          XmlPullParserFactory factory = XmlPullParserFactory.newInstance();

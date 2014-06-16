@@ -39,6 +39,7 @@ import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.io.MultipartStreamer;
 
 import org.apache.http.HttpException;
@@ -46,7 +47,6 @@ import org.apache.http.HttpException;
 import android.content.Context;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -58,7 +58,6 @@ import android.widget.Toast;
 public class JogmapSharing extends GpxCreator
 {
 
-   private static final String TAG = "OGT.JogmapSharing";
    private String jogmapResponseText;
 
    public JogmapSharing(Context context, Uri trackUri, String chosenBaseFileName, boolean attachments, ProgressListener listener)
@@ -118,7 +117,7 @@ public class JogmapSharing extends GpxCreator
       }
       if (statusCode != 200)
       {
-         Log.e(TAG, "Wrong status code " + statusCode);
+         Log.e(this, "Wrong status code " + statusCode);
          jogmapResponseText = mContext.getString(R.string.jogmap_failed) + jogmapResponseText;
          handleError(mContext.getString(R.string.jogmap_task), new HttpException("Unexpected status reported by Jogmap"), jogmapResponseText);
       }
@@ -135,7 +134,7 @@ public class JogmapSharing extends GpxCreator
       }
       catch (IOException e)
       {
-         Log.w(TAG, "Failed to close ", e);
+         Log.w(this, "Failed to close ", e);
       }
    }
 }

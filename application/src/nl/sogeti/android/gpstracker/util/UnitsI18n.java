@@ -40,8 +40,7 @@ import android.preference.PreferenceManager;
 import android.util.TypedValue;
 
 /**
- * Collection of methods to provide metric and imperial data based on locale or
- * overridden by configuration
+ * Collection of methods to provide metric and imperial data based on locale or overridden by configuration
  * 
  * @version $Id$
  * @author rene (c) Feb 2, 2010, Sogeti B.V.
@@ -57,25 +56,22 @@ public class UnitsI18n
    private String mHeight_unit;
    private UnitsChangeListener mListener;
    private OnSharedPreferenceChangeListener mPreferenceListener = new OnSharedPreferenceChangeListener()
-   {
-      @Override
-      public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
       {
-         if (key.equals(Constants.UNITS))
+         @Override
+         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
          {
-            initBasedOnPreferences(sharedPreferences);
-            if (mListener != null)
+            if (key.equals(Constants.UNITS))
             {
-               mListener.onUnitsChange();
+               initBasedOnPreferences(sharedPreferences);
+               if (mListener != null)
+               {
+                  mListener.onUnitsChange();
+               }
             }
          }
-      }
-   };
+      };
    private boolean needsUnitFlip;
    private int mUnits;
-
-   @SuppressWarnings("unused")
-   private static final String TAG = "OGT.UnitsI18n";
 
    public UnitsI18n(Context ctx, UnitsChangeListener listener)
    {
@@ -257,7 +253,7 @@ public class UnitsI18n
       double value = meters * mConversion_from_meter_to_distance;
       return value;
    }
-   
+
    public double conversionFromLocalToMeters(double localizedValue)
    {
       double meters = localizedValue / mConversion_from_meter_to_distance;
@@ -292,7 +288,7 @@ public class UnitsI18n
    public void setUnitsChangeListener(UnitsChangeListener unitsChangeListener)
    {
       mListener = unitsChangeListener;
-      if( mListener != null )
+      if (mListener != null)
       {
          initBasedOnPreferences(PreferenceManager.getDefaultSharedPreferences(mContext));
          PreferenceManager.getDefaultSharedPreferences(mContext).registerOnSharedPreferenceChangeListener(mPreferenceListener);
@@ -304,8 +300,7 @@ public class UnitsI18n
    }
 
    /**
-    * Interface definition for a callback to be invoked when the preference for
-    * units changed.
+    * Interface definition for a callback to be invoked when the preference for units changed.
     * 
     * @version $Id$
     * @author rene (c) Feb 14, 2010, Sogeti B.V.
@@ -320,42 +315,38 @@ public class UnitsI18n
 
    /**
     * Format a speed using the current unit and flipping
-    *  
+    * 
     * @param speed
     * @param decimals format a bit larger showing decimals or seconds
-    * @return 
+    * @return
     */
    public String formatSpeed(double speed, boolean decimals)
    {
       String speedText;
-      if(mUnits == Constants.UNITS_METRICPACE || mUnits == Constants.UNITS_IMPERIALPACE)
+      if (mUnits == Constants.UNITS_METRICPACE || mUnits == Constants.UNITS_IMPERIALPACE)
       {
-         if( decimals )
+         if (decimals)
          {
-            speedText = String.format( "%02d %s",
-                  (int)speed,
-                  this.getSpeedUnit() );
+            speedText = String.format("%02d %s", (int) speed, this.getSpeedUnit());
          }
          else
          {
-            speedText = String.format( "%02d:%02d %s",
-                  (int)speed,
-                  (int)((speed-(int)speed)*60), // convert decimal to seconds
-                  this.getSpeedUnit() );
+            speedText = String.format("%02d:%02d %s", (int) speed, (int) ((speed - (int) speed) * 60), // convert decimal to seconds
+                  this.getSpeedUnit());
          }
       }
       else
       {
-         if( decimals )
+         if (decimals)
          {
-            speedText = String.format( "%.2f %s", speed, this.getSpeedUnit() );
+            speedText = String.format("%.2f %s", speed, this.getSpeedUnit());
          }
          else
          {
-            speedText = String.format( "%.0f %s", speed, this.getSpeedUnit() );
+            speedText = String.format("%.0f %s", speed, this.getSpeedUnit());
          }
 
       }
       return speedText;
-  }
+   }
 }

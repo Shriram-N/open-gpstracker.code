@@ -34,19 +34,17 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import android.util.Log;
-
+import nl.sogeti.android.gpstracker.util.Log;
 
 /**
- * Translates SimplePosition objects to a telnet command and sends the commands to a telnet session with an android emulator.
- *
+ * Translates SimplePosition objects to a telnet command and sends the commands to a telnet session with an android
+ * emulator.
+ * 
  * @version $Id$
  * @author Bram Pouwelse (c) Jan 22, 2009, Sogeti B.V.
- *
  */
 public class TelnetPositionSender
 {
-   private static final String TAG = "TelnetPositionSender";
 
    private static final String TELNET_OK_FEEDBACK_MESSAGE = "OK\r\n";
    private static String HOST = "10.0.2.2";
@@ -56,36 +54,42 @@ public class TelnetPositionSender
    private OutputStream out;
    private InputStream in;
 
-
    /**
     * Constructor
     */
-   public TelnetPositionSender() 
+   public TelnetPositionSender()
    {
 
    }
 
    /**
-    * Setup a telnet connection to the android emulator 
+    * Setup a telnet connection to the android emulator
     */
-   private void createTelnetConnection() {
-      try {
+   private void createTelnetConnection()
+   {
+      try
+      {
          this.socket = new Socket(HOST, PORT);
          this.in = this.socket.getInputStream();
          this.out = this.socket.getOutputStream();
 
          Thread.sleep(500); // give the telnet session half a second to
          // respond
-      } catch (UnknownHostException e) {
+      }
+      catch (UnknownHostException e)
+      {
          e.printStackTrace();
-      } catch (IOException e) {
+      }
+      catch (IOException e)
+      {
          e.printStackTrace();
-      } catch (InterruptedException e) {
+      }
+      catch (InterruptedException e)
+      {
          e.printStackTrace();
       }
       readInput(); // read the input to throw it away the first time :)
    }
-
 
    private void closeConnection()
    {
@@ -103,18 +107,24 @@ public class TelnetPositionSender
 
    /**
     * read the input buffer
+    * 
     * @return
     */
-   private String readInput() {
+   private String readInput()
+   {
       StringBuffer sb = new StringBuffer();
-      try {
+      try
+      {
          byte[] bytes = new byte[this.in.available()];
          this.in.read(bytes);
 
-         for (byte b : bytes) {
+         for (byte b : bytes)
+         {
             sb.append((char) b);
          }
-      } catch (Exception e) {
+      }
+      catch (Exception e)
+      {
          System.err.println("Warning: Could not read the input from the telnet session");
       }
 
@@ -124,28 +134,30 @@ public class TelnetPositionSender
    /**
     * When a new position is received it is sent to the android emulator over the telnet connection.
     * 
-    *  @param position the position to send
+    * @param position the position to send
     */
-   public void sendCommand(String telnetString) 
+   public void sendCommand(String telnetString)
    {
       createTelnetConnection();
 
-      Log.v( TAG, "Sending command: "+telnetString);
-      
+      Log.v(this, "Sending command: " + telnetString);
+
       byte[] sendArray = telnetString.getBytes();
 
-      for (byte b : sendArray) 
+      for (byte b : sendArray)
       {
-         try 
+         try
          {
             this.out.write(b);
-         } catch (IOException e) {
+         }
+         catch (IOException e)
+         {
             System.out.println("IOException: " + e.getMessage());
          }
       }
 
       String feedback = readInput();
-      if (!feedback.equals(TELNET_OK_FEEDBACK_MESSAGE)) 
+      if (!feedback.equals(TELNET_OK_FEEDBACK_MESSAGE))
       {
          System.err.println("Warning: no OK mesage message was(" + feedback + ")");
       }

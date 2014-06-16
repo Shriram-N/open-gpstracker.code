@@ -32,6 +32,7 @@ import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.tasks.oauth.OAuthRequestTokenTask;
 import nl.sogeti.android.gpstracker.tasks.oauth.RetrieveAccessTokenTask;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 import oauth.signpost.basic.DefaultOAuthConsumer;
@@ -43,15 +44,12 @@ import android.net.Uri;
 import android.os.AsyncTask.Status;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.TextView;
 
 /**
- * Prepares a OAuthConsumer and OAuthProvider OAuthConsumer is configured with the consumer key & consumer secret. Both
- * key and secret are retrieved from the extras in the Intent OAuthProvider is configured with the 3 OAuth endpoints.
- * These are retrieved from the extras in the Intent. Execute the OAuthRequestTokenTask to retrieve the request, and
- * authorize the request. After the request is authorized, a callback is made here and this activity finishes to return
- * to the last Activity on the stack.
+ * Prepares a OAuthConsumer and OAuthProvider OAuthConsumer is configured with the consumer key & consumer secret. Both key and secret are retrieved from the extras in the Intent OAuthProvider is
+ * configured with the 3 OAuth endpoints. These are retrieved from the extras in the Intent. Execute the OAuthRequestTokenTask to retrieve the request, and authorize the request. After the request is
+ * authorized, a callback is made here and this activity finishes to return to the last Activity on the stack.
  */
 public class PrepareRequestTokenActivity extends Activity
 {
@@ -83,8 +81,6 @@ public class PrepareRequestTokenActivity extends Activity
     * String value of the key in the DefaultSharedPreferences in which to store the permission secret
     */
    public static final String OAUTH_TOKEN_SECRET_PREF = "OAUTH_TOKEN_SECRET";
-
-   final String TAG = "OGT.PrepareRequestTokenActivity";
 
    private OAuthConsumer consumer;
    private OAuthProvider provider;
@@ -134,8 +130,7 @@ public class PrepareRequestTokenActivity extends Activity
    }
 
    /**
-    * Called when the OAuthRequestTokenTask finishes (user has authorized the request token). The callback URL will be
-    * intercepted here.
+    * Called when the OAuthRequestTokenTask finishes (user has authorized the request token). The callback URL will be intercepted here.
     */
    @Override
    public void onNewIntent(Intent intent)
@@ -145,8 +140,8 @@ public class PrepareRequestTokenActivity extends Activity
       final Uri uri = intent.getData();
       if (uri != null && uri.getScheme().equals(Constants.OAUTH_CALLBACK_SCHEME))
       {
-         Log.i(TAG, "Callback received : " + uri);
-         Log.i(TAG, "Retrieving Access Token");
+         Log.i(this, "Callback received : " + uri);
+         Log.i(this, "Retrieving Access Token");
          new RetrieveAccessTokenTask(this, consumer, provider, prefs, mTokenKey, mSecretKey).execute(uri);
          finish();
       }

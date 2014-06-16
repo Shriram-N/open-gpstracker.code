@@ -1,17 +1,16 @@
 package nl.sogeti.android.gpstracker.service.backup;
 
 import nl.sogeti.android.gpstracker.service.backup.DriveBackupService.LocalBinder;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.util.Log;
 
 public class DriveBinder
 {
 
-   private static final String TAG = "DriveBinder";
    private boolean bound;
    private Listener listener;
    private ServiceConnection connection;
@@ -33,7 +32,7 @@ public class DriveBinder
       }
       else
       {
-         Log.w(TAG, "Can not bind when already bound", new IllegalStateException());
+         Log.w(this, "Can not bind when already bound", new IllegalStateException());
       }
    }
 
@@ -47,7 +46,7 @@ public class DriveBinder
       }
       else
       {
-         Log.w(TAG, "Can not unbind when not bound", new IllegalStateException());
+         Log.w(this, "Can not unbind when not bound", new IllegalStateException());
       }
    }
 

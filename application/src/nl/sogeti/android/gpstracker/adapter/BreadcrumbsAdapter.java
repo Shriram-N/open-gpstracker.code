@@ -52,7 +52,6 @@ import android.widget.TextView;
  */
 public class BreadcrumbsAdapter extends BaseAdapter
 {
-   private static final String TAG = "OGT.BreadcrumbsAdapter";
 
    public static final boolean DEBUG = false;
 
@@ -77,7 +76,6 @@ public class BreadcrumbsAdapter extends BaseAdapter
 
    /**
     * Reloads the current list of known breadcrumb listview items
-    * 
     */
    public void updateItemList()
    {

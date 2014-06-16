@@ -38,6 +38,7 @@ import nl.sogeti.android.gpstracker.BuildConfig;
 import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.activity.ApplicationPreferenceActivity;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import org.apache.http.client.ClientProtocolException;
 
@@ -52,21 +53,19 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class CustomUpload extends BroadcastReceiver
 {
    private static final boolean DEBUG = BuildConfig.DEBUG && false;
    private static final String CUSTOMUPLOAD_BACKLOG_DEFAULT = "20";
    private static CustomUpload sCustomUpload = null;
-   private static final String TAG = "OGT.CustomUpload";
    private static final int NOTIFICATION_ID = R.string.customupload_failed;
    private static Queue<URL> sRequestBacklog = new LinkedList<URL>();
 
    public static synchronized void initStreaming(Context ctx)
    {
       if (DEBUG)
-         Log.d(TAG, "initStreaming(Context)");
+         Log.d(CustomUpload.class, "initStreaming(Context)");
       if (sCustomUpload != null)
       {
          shutdownStreaming(ctx);
@@ -81,7 +80,7 @@ public class CustomUpload extends BroadcastReceiver
    public static synchronized void shutdownStreaming(Context ctx)
    {
       if (DEBUG)
-         Log.d(TAG, "shutdownStreaming(Context)");
+         Log.d(CustomUpload.class, "shutdownStreaming(Context)");
       if (sCustomUpload != null)
       {
          ctx.unregisterReceiver(sCustomUpload);
@@ -93,14 +92,14 @@ public class CustomUpload extends BroadcastReceiver
    private void onShutdown()
    {
       if (DEBUG)
-         Log.d(TAG, "onShutdown()");
+         Log.d(this, "onShutdown()");
    }
 
    @Override
    public void onReceive(Context context, Intent intent)
    {
       if (DEBUG)
-         Log.d(TAG, "onReceive(Context, Intent)");
+         Log.d(this, "onReceive(Context, Intent)");
       SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
       String prefUrl = preferences.getString(ApplicationPreferenceActivity.CUSTOMUPLOAD_URL, "http://www.example.com");
       Integer prefBacklog = Integer.valueOf(preferences.getString(ApplicationPreferenceActivity.CUSTOMUPLOAD_BACKLOG, CUSTOMUPLOAD_BACKLOG_DEFAULT));
@@ -126,7 +125,7 @@ public class CustomUpload extends BroadcastReceiver
          }
          else
          {
-            Log.e(TAG, "URL does not have correct scheme or host " + uploadUri);
+            Log.e(this, "URL does not have correct scheme or host " + uploadUri);
          }
          if (sRequestBacklog.size() > prefBacklog)
          {
@@ -158,7 +157,7 @@ public class CustomUpload extends BroadcastReceiver
 
    private void notifyError(Context context, Exception e)
    {
-      Log.e(TAG, "Custom upload failed", e);
+      Log.e(this, "Custom upload failed", e);
       String ns = Context.NOTIFICATION_SERVICE;
       NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(ns);
 

@@ -24,15 +24,14 @@ package nl.sogeti.android.gpstracker.broadcast;
 import nl.sogeti.android.gpstracker.BuildConfig;
 import nl.sogeti.android.gpstracker.service.logger.GPSLoggerService;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class PowerReceiver extends BroadcastReceiver
 {
-   private final static String TAG = "OGT.PowerReceiver";
    private static final boolean DEBUG = BuildConfig.DEBUG && false;
 
    @Override
@@ -43,7 +42,7 @@ public class PowerReceiver extends BroadcastReceiver
       String action = intent.getAction();
       if (DEBUG)
       {
-         Log.d(TAG, "OpenGPSTracker's PowerReceiver received: " + action);
+         Log.d(this, "OpenGPSTracker's PowerReceiver received: " + action);
       }
       if (action.equals(Intent.ACTION_POWER_CONNECTED))
       {
@@ -55,7 +54,7 @@ public class PowerReceiver extends BroadcastReceiver
       }
       else
       {
-         Log.w(TAG, "OpenGPSTracker's PowerReceiver received " + action + ", but it's only able to respond to " + Intent.ACTION_POWER_CONNECTED + " and " + Intent.ACTION_POWER_DISCONNECTED
+         Log.w(this, "OpenGPSTracker's PowerReceiver received " + action + ", but it's only able to respond to " + Intent.ACTION_POWER_CONNECTED + " and " + Intent.ACTION_POWER_DISCONNECTED
                + ". This shouldn't happen!");
       }
 

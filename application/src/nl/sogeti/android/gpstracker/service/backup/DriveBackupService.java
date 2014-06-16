@@ -22,6 +22,7 @@ import nl.sogeti.android.gpstracker.activity.LoggerMap;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.app.Activity;
 import android.app.Service;
 import android.content.ContentUris;
@@ -32,7 +33,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -67,7 +67,6 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
 {
 
    private static final String MIME_TYPE = "application/gpx";
-   private static final String TAG = "DriveBackup";
    private static final String FOLDER_NAME = "OpenGPSTracker";
    private GoogleApiClient googleApiClient;
    private DriveId backupFolderId;
@@ -117,14 +116,14 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void onConnected(Bundle bundle)
    {
-      Log.d(TAG, "Start backup");
+      Log.d(this, "Start backup");
       getBackupFolder();
    }
 
    @Override
    public void onConnectionSuspended(int arg0)
    {
-      Log.d(TAG, "Stop backup");
+      Log.d(this, "Stop backup");
       stopBackup();
    }
 
@@ -190,7 +189,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
                if (!isStoredOnDrive(fileName))
                {
                   Uri trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, trackId);
-                  Log.d(TAG, "Ready to backup " + fileName + " of " + trackUri);
+                  Log.d(this, "Ready to backup " + fileName + " of " + trackUri);
                   new GpxCreator(this, trackUri, fileName, true, this).execute();
                   break;
                }
@@ -221,14 +220,14 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          String remoteTitle = remote.getTitle();
          if (localTitle.equals(remoteTitle))
          {
-            Log.d(TAG, "Found StoredOnDrive(local:'" + localTitle + "' remote '" + remoteTitle + "')");
+            Log.d(this, "Found StoredOnDrive(local:'" + localTitle + "' remote '" + remoteTitle + "')");
             isStored = true;
             break;
          }
       }
       if (!isStored)
       {
-         Log.d(TAG, "Not found StoredOnDrive(local:'" + localTitle + "')");
+         Log.d(this, "Not found StoredOnDrive(local:'" + localTitle + "')");
       }
       return isStored;
    }
@@ -241,7 +240,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void setIndeterminate(boolean indeterminate)
    {
-      Log.d(TAG, "setIndeterminate(indeterminate" + indeterminate + ")");
+      Log.d(this, "setIndeterminate(indeterminate" + indeterminate + ")");
       if (activity != null)
       {
          activity.setProgressBarIndeterminate(indeterminate);
@@ -252,7 +251,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void started()
    {
-      Log.d(TAG, "started()");
+      Log.d(this, "started()");
       if (activity != null)
       {
          activity.setProgressBarVisibility(true);
@@ -262,7 +261,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void setProgress(int value)
    {
-      Log.d(TAG, "setProgress(value" + value + ")");
+      Log.d(this, "setProgress(value" + value + ")");
       if (activity != null)
       {
          activity.setProgress(value);
@@ -282,7 +281,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void finished(Uri result)
    {
-      Log.d(TAG, "finished(result" + result + ")");
+      Log.d(this, "finished(result" + result + ")");
       activity.setProgressBarVisibility(false);
       localFile = result;
       createTrackContents();
@@ -291,7 +290,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void showError(String task, String errorMessage, Exception exception)
    {
-      Log.d(TAG, "showError(errorMessage" + errorMessage + ")");
+      Log.d(this, "showError(errorMessage" + errorMessage + ")");
       //TODO continue
    }
 
@@ -324,7 +323,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to list root-folder");
+            Log.e(this, "Failed to list root-folder");
          }
       }
    }
@@ -342,7 +341,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to create folder");
+            Log.e(this, "Failed to create folder");
          }
       }
    }
@@ -360,7 +359,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to list GPX files");
+            Log.e(this, "Failed to list GPX files");
          }
          result.getMetadataBuffer().close();
          fileList = null;
@@ -381,7 +380,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to list GPX files");
+            Log.e(this, "Failed to list GPX files");
          }
       }
    }
@@ -400,7 +399,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to create file");
+            Log.e(this, "Failed to create file");
          }
       }
 
@@ -421,15 +420,15 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
                in = getContentResolver().openInputStream(localFile);
                out = results.getContents().getOutputStream();
                long count = ByteStreams.copy(in, out);
-               Log.d(TAG, "Copied " + count + " bytes");
+               Log.d(this, "Copied " + count + " bytes");
             }
             catch (FileNotFoundException e)
             {
-               Log.e(TAG, "Failed to upload contents", e);
+               Log.e(this, "Failed to upload contents", e);
             }
             catch (IOException e)
             {
-               Log.e(TAG, "Failed to upload contents", e);
+               Log.e(this, "Failed to upload contents", e);
             }
             finally
             {
@@ -440,7 +439,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
          else
          {
-            Log.e(TAG, "Failed to open file contents");
+            Log.e(this, "Failed to open file contents");
          }
       }
 
@@ -452,12 +451,12 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          {
             if (results.getStatus().isSuccess())
             {
-               Log.e(TAG, "Succes with uploading... " + localFile.getLastPathSegment());
+               Log.e(this, "Succes with uploading... " + localFile.getLastPathSegment());
                listCompletedBackups();
             }
             else
             {
-               Log.e(TAG, "Failed to close the file contents");
+               Log.e(this, "Failed to close the file contents");
             }
          }
       }
@@ -472,7 +471,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
             }
             catch (IOException e)
             {
-               Log.e(TAG, "Failed to close " + closeable);
+               Log.e(this, "Failed to close " + closeable);
             }
          }
       }

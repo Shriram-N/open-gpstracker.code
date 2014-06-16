@@ -44,6 +44,7 @@ import nl.sogeti.android.gpstracker.service.backup.DriveBinder;
 import nl.sogeti.android.gpstracker.service.backup.DriveBinder.Listener;
 import nl.sogeti.android.gpstracker.service.logger.GPSLoggerServiceManager;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.UnitsI18n;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -72,7 +73,6 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Process;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -123,7 +123,6 @@ public class LoggerMap extends MapActivity implements Listener
    private static final int DIALOG_URIS = 34;
    private static final int DIALOG_CONTRIB = 35;
    private static final int DIALOG_DRIVE = 36;
-   private static final String TAG = "OGT.LoggerMap";
    public static int RESOLVE_CONNECTION_REQUEST_CODE = DIALOG_DRIVE;
    // UI's
    private CheckBox mTraffic;
@@ -206,7 +205,7 @@ public class LoggerMap extends MapActivity implements Listener
       }
       catch (InterruptedException e)
       {
-         Log.e(TAG, "Failed waiting for a semaphore", e);
+         Log.e(this, "Failed waiting for a semaphore", e);
       }
       mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
       mMapView = new MapViewProxy();
@@ -274,7 +273,7 @@ public class LoggerMap extends MapActivity implements Listener
       if (this.mWakeLock != null && this.mWakeLock.isHeld())
       {
          this.mWakeLock.release();
-         Log.w(TAG, "onPause(): Released lock to keep screen on!");
+         Log.w(this, "onPause(): Released lock to keep screen on!");
       }
       ContentResolver resolver = this.getContentResolver();
       resolver.unregisterContentObserver(this.mTrackSegmentsObserver);
@@ -313,7 +312,7 @@ public class LoggerMap extends MapActivity implements Listener
       if (mWakeLock != null && mWakeLock.isHeld())
       {
          mWakeLock.release();
-         Log.w(TAG, "onDestroy(): Released lock to keep screen on!");
+         Log.w(this, "onDestroy(): Released lock to keep screen on!");
       }
       mUnits = null;
       DriveBackupService service = driveBinder.getService();
@@ -340,7 +339,7 @@ public class LoggerMap extends MapActivity implements Listener
          }
          catch (NumberFormatException e)
          {
-            Log.w(TAG, "LastPathSegment not an id");
+            Log.w(this, "LastPathSegment not an id");
          }
       }
    }
@@ -374,7 +373,7 @@ public class LoggerMap extends MapActivity implements Listener
          }
          catch (NumberFormatException e)
          {
-            Log.w(TAG, "lastPathSegment is not a id ");
+            Log.w(this, "lastPathSegment is not a id ");
             moveToLastTrack();
          }
       }
@@ -704,7 +703,7 @@ public class LoggerMap extends MapActivity implements Listener
                   dialog.findViewById(R.id.google_overlays).setVisibility(View.GONE);
                   break;
                default:
-                  Log.e(TAG, "Fault in value " + provider + " as MapProvider.");
+                  Log.e(this, "Fault in value " + provider + " as MapProvider.");
                   break;
             }
             break;
@@ -761,7 +760,7 @@ public class LoggerMap extends MapActivity implements Listener
             }
             break;
          default:
-            Log.e(TAG, "Returned form unknow activity: " + requestCode);
+            Log.e(this, "Returned form unknow activity: " + requestCode);
             break;
       }
    }
@@ -973,7 +972,7 @@ public class LoggerMap extends MapActivity implements Listener
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
-               //            Log.d( TAG, "mNoTrackDialogListener" + which);
+               //            Log.d( this, "mNoTrackDialogListener" + which);
                Intent tracklistIntent = new Intent(LoggerMap.this, TrackList.class);
                tracklistIntent.putExtra(Tracks._ID, LoggerMap.this.mTrackId);
                startActivityForResult(tracklistIntent, MENU_TRACKLIST);
@@ -1105,7 +1104,7 @@ public class LoggerMap extends MapActivity implements Listener
                }
                else
                {
-                  Log.w(TAG, "mTrackMediasObserver skipping change on " + mLastSegment);
+                  Log.w(this, "mTrackMediasObserver skipping change on " + mLastSegment);
                }
             }
          };
@@ -1120,7 +1119,7 @@ public class LoggerMap extends MapActivity implements Listener
                }
                else
                {
-                  Log.w(TAG, "mTrackSegmentsObserver skipping change on " + mLastSegment);
+                  Log.w(this, "mTrackSegmentsObserver skipping change on " + mLastSegment);
                }
             }
          };
@@ -1139,12 +1138,12 @@ public class LoggerMap extends MapActivity implements Listener
                   }
                   else
                   {
-                     Log.e(TAG, "Error the last segment changed but it is not on screen! " + mLastSegment);
+                     Log.e(this, "Error the last segment changed but it is not on screen! " + mLastSegment);
                   }
                }
                else
                {
-                  Log.w(TAG, "mSegmentWaypointsObserver skipping change on " + mLastSegment);
+                  Log.w(this, "mSegmentWaypointsObserver skipping change on " + mLastSegment);
                }
             }
          };
@@ -1222,7 +1221,7 @@ public class LoggerMap extends MapActivity implements Listener
             updateOsmBaseOverlay();
             break;
          default:
-            Log.e(TAG, "Fault in value " + provider + " as MapProvider.");
+            Log.e(this, "Fault in value " + provider + " as MapProvider.");
             break;
       }
    }
@@ -1263,17 +1262,17 @@ public class LoggerMap extends MapActivity implements Listener
             PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
             if (disabledimming)
             {
-               mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, TAG);
+               mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, getString(R.string.app_name));
             }
             else
             {
-               mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, TAG);
+               mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, getString(R.string.app_name));
             }
          }
          if (mLoggerServiceManager.getLoggingState() == Constants.LOGGING && !mWakeLock.isHeld())
          {
             mWakeLock.acquire();
-            Log.w(TAG, "Acquired lock to keep screen on!");
+            Log.w(this, "Acquired lock to keep screen on!");
          }
       }
    }
@@ -1496,7 +1495,7 @@ public class LoggerMap extends MapActivity implements Listener
          segmentsCursor = resolver.query(segmentsUri, new String[] { Segments._ID }, null, null, null);
          if (segmentsCursor != null && segmentsCursor.getCount() == segmentOverlaysCount)
          {
-            //            Log.d( TAG, "Alignment of segments" );
+            //            Log.d( this, "Alignment of segments" );
          }
          else
          {
@@ -1534,13 +1533,13 @@ public class LoggerMap extends MapActivity implements Listener
 
             this.mMapView.clearAnimation();
             this.mMapView.getController().setCenter(lastPoint);
-            //            Log.d( TAG, "mMapView.setCenter()" );
+            //            Log.d( this, "mMapView.setCenter()" );
          }
          else if (out.x < width / 4 || out.y < height / 4 || out.x > (width / 4) * 3 || out.y > (height / 4) * 3)
          {
             this.mMapView.clearAnimation();
             this.mMapView.getController().animateTo(lastPoint);
-            //            Log.d( TAG, "mMapView.animateTo()" );
+            //            Log.d( this, "mMapView.animateTo()" );
          }
       }
    }

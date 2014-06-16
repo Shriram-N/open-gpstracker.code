@@ -29,6 +29,7 @@ import nl.sogeti.android.gpstracker.tasks.breadcrumbs.GetBreadcrumbsTracksTask;
 import nl.sogeti.android.gpstracker.tasks.breadcrumbs.UploadBreadcrumbsTrackTask;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.Pair;
 import oauth.signpost.basic.DefaultOAuthConsumer;
 import android.annotation.SuppressLint;
@@ -44,7 +45,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 /**
  * ????
@@ -57,7 +57,6 @@ public class BreadcrumbsService extends Service implements Observer, ProgressLis
    public static final String OAUTH_TOKEN = "breadcrumbs_oauth_token";
    public static final String OAUTH_TOKEN_SECRET = "breadcrumbs_oauth_secret";
 
-   private static final String TAG = "OGT.BreadcrumbsService";
    public static final String NOTIFY_DATA_SET_CHANGED = "nl.sogeti.android.gpstracker.intent.action.NOTIFY_DATA_SET_CHANGED";
    public static final String NOTIFY_PROGRESS_CHANGED = "nl.sogeti.android.gpstracker.intent.action.NOTIFY_PROGRESS_CHANGED";
    public static final String PROGRESS_INDETERMINATE = null;
@@ -175,7 +174,7 @@ public class BreadcrumbsService extends Service implements Observer, ProgressLis
 
    public void removeAuthentication()
    {
-      Log.w(TAG, "Removing Breadcrumbs OAuth tokens");
+      Log.w(this, "Removing Breadcrumbs OAuth tokens");
       Editor e = PreferenceManager.getDefaultSharedPreferences(this).edit();
       e.remove(OAUTH_TOKEN);
       e.remove(OAUTH_TOKEN_SECRET);

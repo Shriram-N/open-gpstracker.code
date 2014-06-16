@@ -47,6 +47,7 @@ import nl.sogeti.android.gpstracker.model.BreadcrumbsTracks;
 import nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.io.MultipartStreamer;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -57,7 +58,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 /**
  * An asynchronous task that communicates with Twitter to retrieve a request token. (OAuthGetRequestToken) After receiving the request token from Twitter, pop a browser to the user to authorize the
@@ -66,7 +66,6 @@ import android.util.Log;
 public class UploadBreadcrumbsTrackTask extends GpxCreator
 {
 
-   final String TAG = "OGT.UploadBreadcrumbsTrackTask";
    private BreadcrumbsService mService;
    private OAuthConsumer mConsumer;
    private String mActivityId;
@@ -197,7 +196,7 @@ public class UploadBreadcrumbsTrackTask extends GpxCreator
 
          if (BreadcrumbsAdapter.DEBUG)
          {
-            Log.d(TAG, "Upload Response: " + responseText);
+            Log.d(this, "Upload Response: " + responseText);
          }
 
          Pattern p = Pattern.compile(">([0-9]+)</id>");
@@ -356,7 +355,7 @@ public class UploadBreadcrumbsTrackTask extends GpxCreator
       }
       mProgressAdmin.addPhotoUploadProgress(photo.length());
 
-      Log.i(TAG, "Uploaded photo " + responseText);
+      Log.i(this, "Uploaded photo " + responseText);
    }
 
    @Override
@@ -416,7 +415,7 @@ public class UploadBreadcrumbsTrackTask extends GpxCreator
       }
       catch (IOException e)
       {
-         Log.w(TAG, "Failed to close ", e);
+         Log.w(this, "Failed to close ", e);
       }
    }
 }

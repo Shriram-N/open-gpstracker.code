@@ -33,12 +33,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import nl.sogeti.android.gpstracker.util.Log;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.Context;
 import android.content.res.XmlResourceParser;
-import android.util.Log;
 
 /**
  * Feeder of GPS-location information
@@ -48,7 +49,6 @@ import android.util.Log;
  */
 public class MockGPSLoggerDriver implements Runnable
 {
-   private static final String TAG = "MockGPSLoggerDriver";
    private boolean running = true;
    private int mTimeout;
    private Context mContext;
@@ -81,54 +81,54 @@ public class MockGPSLoggerDriver implements Runnable
       return this.positions.size();
    }
 
-   private void prepareRun( int xmlResource )
+   private void prepareRun(int xmlResource)
    {
       this.positions = new ArrayList<SimplePosition>();
-      XmlResourceParser xmlParser = this.mContext.getResources().getXml( xmlResource );
-      doUglyXMLParsing( this.positions, xmlParser );
+      XmlResourceParser xmlParser = this.mContext.getResources().getXml(xmlResource);
+      doUglyXMLParsing(this.positions, xmlParser);
       xmlParser.close();
    }
 
    public void run()
    {
-      prepareRun( this.mRouteResource );
+      prepareRun(this.mRouteResource);
 
-      while( this.running && ( this.positions.size() > 0 ) )
+      while (this.running && (this.positions.size() > 0))
       {
-         SimplePosition position = this.positions.remove( 0 );
+         SimplePosition position = this.positions.remove(0);
          //String nmeaCommand = createGPGGALocationCommand(position.getLongitude(), position.getLatitude(), 0);
-         String nmeaCommand = createGPRMCLocationCommand( position.lng, position.lat, 0, 0 );
-         String checksum = calulateChecksum( nmeaCommand );
-         this.sender.sendCommand( "geo nmea $" + nmeaCommand + "*" + checksum + "\r\n" );
+         String nmeaCommand = createGPRMCLocationCommand(position.lng, position.lat, 0, 0);
+         String checksum = calulateChecksum(nmeaCommand);
+         this.sender.sendCommand("geo nmea $" + nmeaCommand + "*" + checksum + "\r\n");
 
          try
          {
-            Thread.sleep( this.mTimeout );
+            Thread.sleep(this.mTimeout);
          }
-         catch( InterruptedException e )
+         catch (InterruptedException e)
          {
-            Log.w( TAG, "Interrupted" );
+            Log.w(this, "Interrupted");
          }
       }
    }
 
-   public static String calulateChecksum( String nmeaCommand )
+   public static String calulateChecksum(String nmeaCommand)
    {
       byte[] chars = null;
       try
       {
-         chars = nmeaCommand.getBytes( "ASCII" );
+         chars = nmeaCommand.getBytes("ASCII");
       }
-      catch( UnsupportedEncodingException e )
+      catch (UnsupportedEncodingException e)
       {
          e.printStackTrace();
       }
       byte xor = 0;
-      for( int i = 0; i < chars.length; i++ )
+      for (int i = 0; i < chars.length; i++)
       {
          xor ^= chars[i];
       }
-      return Integer.toHexString( (int) xor ).toUpperCase();
+      return Integer.toHexString((int) xor).toUpperCase();
    }
 
    public void stop()
@@ -136,7 +136,7 @@ public class MockGPSLoggerDriver implements Runnable
       this.running = false;
    }
 
-   private void doUglyXMLParsing( ArrayList<SimplePosition> positions, XmlResourceParser xmlParser )
+   private void doUglyXMLParsing(ArrayList<SimplePosition> positions, XmlResourceParser xmlParser)
    {
       int eventType;
       try
@@ -145,45 +145,44 @@ public class MockGPSLoggerDriver implements Runnable
 
          SimplePosition lastPosition = null;
          boolean speed = false;
-         while( eventType != XmlPullParser.END_DOCUMENT )
+         while (eventType != XmlPullParser.END_DOCUMENT)
          {
-            if( eventType == XmlPullParser.START_TAG )
+            if (eventType == XmlPullParser.START_TAG)
             {
-               if( xmlParser.getName().equals( "trkpt" ) || xmlParser.getName().equals( "rtept" ) || xmlParser.getName().equals( "wpt" ) ) 
+               if (xmlParser.getName().equals("trkpt") || xmlParser.getName().equals("rtept")
+                     || xmlParser.getName().equals("wpt"))
                {
-                  lastPosition = new SimplePosition( xmlParser.getAttributeFloatValue( 0, 12.3456F ), xmlParser.getAttributeFloatValue( 1, 12.3456F ) );
-                  positions.add( lastPosition );
+                  lastPosition = new SimplePosition(xmlParser.getAttributeFloatValue(0, 12.3456F),
+                        xmlParser.getAttributeFloatValue(1, 12.3456F));
+                  positions.add(lastPosition);
                }
-               if( xmlParser.getName().equals( "speed" )   )
+               if (xmlParser.getName().equals("speed"))
                {
                   speed = true;
                }
             }
-            else if( eventType == XmlPullParser.END_TAG )
+            else if (eventType == XmlPullParser.END_TAG)
             {
-               if( xmlParser.getName().equals( "speed" )   )
+               if (xmlParser.getName().equals("speed"))
                {
                   speed = false;
                }
             }
-            else  if( eventType ==  XmlPullParser.TEXT )
+            else if (eventType == XmlPullParser.TEXT)
             {
-               if( lastPosition != null && speed )
+               if (lastPosition != null && speed)
                {
-                  lastPosition.speed = Float.parseFloat( xmlParser.getText() );
+                  lastPosition.speed = Float.parseFloat(xmlParser.getText());
                }
             }
-            
-            
-            
 
             eventType = xmlParser.next();
          }
       }
-      catch( XmlPullParserException e )
+      catch (XmlPullParserException e)
       { /* ignore */
       }
-      catch( IOException e )
+      catch (IOException e)
       {/* ignore */
       }
    }
@@ -197,7 +196,7 @@ public class MockGPSLoggerDriver implements Runnable
     * @param speed in mps
     * @return
     */
-   public static String createGPRMCLocationCommand( double longitude, double latitude, double elevation, double speed )
+   public static String createGPRMCLocationCommand(double longitude, double latitude, double elevation, double speed)
    {
       speed *= 0.51; // from m/s to knots
       final String COMMAND_GPS = "GPRMC," + "%1$02d" + // hh      c.get(Calendar.HOUR_OF_DAY)
@@ -224,30 +223,32 @@ public class MockGPSLoggerDriver implements Runnable
             "mode"; // Just as workaround....
 
       Calendar c = Calendar.getInstance();
-      double absLong = Math.abs( longitude );
-      int longDegree = (int) Math.floor( absLong );
+      double absLong = Math.abs(longitude);
+      int longDegree = (int) Math.floor(absLong);
       char longDirection = 'E';
-      if( longitude < 0 )
+      if (longitude < 0)
       {
          longDirection = 'W';
       }
-      double longMinute = ( absLong - Math.floor( absLong ) ) * 60;
-      double absLat = Math.abs( latitude );
-      int latDegree = (int) Math.floor( absLat );
+      double longMinute = (absLong - Math.floor(absLong)) * 60;
+      double absLat = Math.abs(latitude);
+      int latDegree = (int) Math.floor(absLat);
       char latDirection = 'N';
-      if( latitude < 0 )
+      if (latitude < 0)
       {
          latDirection = 'S';
       }
-      double latMinute = ( absLat - Math.floor( absLat ) ) * 60;
+      double latMinute = (absLat - Math.floor(absLat)) * 60;
 
-      String command = String.format( COMMAND_GPS, c.get( Calendar.HOUR_OF_DAY ), c.get( Calendar.MINUTE ), c.get( Calendar.SECOND ), c.get( Calendar.MILLISECOND ), latDegree, latMinute,
-            latDirection, longDegree, longMinute, longDirection, c.get( Calendar.DAY_OF_MONTH ), c.get( Calendar.MONTH ), c.get( Calendar.YEAR ) - 2000 , speed);
+      String command = String.format(COMMAND_GPS, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE),
+            c.get(Calendar.SECOND), c.get(Calendar.MILLISECOND), latDegree, latMinute, latDirection, longDegree,
+            longMinute, longDirection, c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH),
+            c.get(Calendar.YEAR) - 2000, speed);
       return command;
 
    }
 
-   public static String createGPGGALocationCommand( double longitude, double latitude, double elevation )
+   public static String createGPGGALocationCommand(double longitude, double latitude, double elevation)
    {
 
       final String COMMAND_GPS = "GPGGA," + // $--GGA,
@@ -265,28 +266,29 @@ public class MockGPSLoggerDriver implements Runnable
 
       Calendar c = Calendar.getInstance();
 
-      double absLong = Math.abs( longitude );
-      int longDegree = (int) Math.floor( absLong );
+      double absLong = Math.abs(longitude);
+      int longDegree = (int) Math.floor(absLong);
       char longDirection = 'E';
-      if( longitude < 0 )
+      if (longitude < 0)
       {
          longDirection = 'W';
       }
 
-      double longMinute = ( absLong - Math.floor( absLong ) ) * 60;
+      double longMinute = (absLong - Math.floor(absLong)) * 60;
 
-      double absLat = Math.abs( latitude );
-      int latDegree = (int) Math.floor( absLat );
+      double absLat = Math.abs(latitude);
+      int latDegree = (int) Math.floor(absLat);
       char latDirection = 'N';
-      if( latitude < 0 )
+      if (latitude < 0)
       {
          latDirection = 'S';
       }
 
-      double latMinute = ( absLat - Math.floor( absLat ) ) * 60;
+      double latMinute = (absLat - Math.floor(absLat)) * 60;
 
-      String command = String.format( COMMAND_GPS, c.get( Calendar.HOUR_OF_DAY ), c.get( Calendar.MINUTE ), c.get( Calendar.SECOND ), c.get( Calendar.MILLISECOND ), latDegree, latMinute,
-            latDirection, longDegree, longMinute, longDirection );
+      String command = String.format(COMMAND_GPS, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE),
+            c.get(Calendar.SECOND), c.get(Calendar.MILLISECOND), latDegree, latMinute, latDirection, longDegree,
+            longMinute, longDirection);
       return command;
    }
 
@@ -304,9 +306,9 @@ public class MockGPSLoggerDriver implements Runnable
 
    }
 
-   public void sendSMS( String string )
+   public void sendSMS(String string)
    {
-      this.sender.sendCommand( "sms send 31886606607 " + string + "\r\n" );
+      this.sender.sendCommand("sms send 31886606607 " + string + "\r\n");
    }
 
 }

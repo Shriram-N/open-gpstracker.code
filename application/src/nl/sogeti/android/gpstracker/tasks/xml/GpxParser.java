@@ -44,6 +44,7 @@ import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.io.ProgressFilterInputStream;
 import nl.sogeti.android.gpstracker.util.io.UnicodeReader;
 
@@ -58,7 +59,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.util.Log;
 import android.view.Window;
 
 public class GpxParser extends AsyncTask<Uri, Void, Uri>
@@ -77,7 +77,6 @@ public class GpxParser extends AsyncTask<Uri, Void, Uri>
    public static final SimpleDateFormat ZULU_DATE_FORMAT_MS = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
    public static final SimpleDateFormat ZULU_DATE_FORMAT_BC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'");
    protected static final int DEFAULT_UNKNOWN_FILESIZE = 1024 * 1024 * 10;
-   private static final String TAG = "OGT.GpxParser";
    static
    {
       TimeZone utc = TimeZone.getTimeZone("UTC");
@@ -343,7 +342,7 @@ public class GpxParser extends AsyncTask<Uri, Void, Uri>
          }
          catch (IOException e)
          {
-            Log.w(TAG, "Failed closing inputstream");
+            Log.w(this, "Failed closing inputstream");
          }
       }
       return trackUri;
@@ -399,7 +398,7 @@ public class GpxParser extends AsyncTask<Uri, Void, Uri>
       }
       catch (ParseException e)
       {
-         Log.w(TAG, "Failed to parse a time-date", e);
+         Log.w(GpxParser.class, "Failed to parse a time-date", e);
       }
       return dateTime;
    }
@@ -410,7 +409,7 @@ public class GpxParser extends AsyncTask<Uri, Void, Uri>
     */
    protected void handleError(Exception dialogException, String dialogErrorMessage)
    {
-      Log.e(TAG, "Unable to save ", dialogException);
+      Log.e(this, "Unable to save ", dialogException);
       mErrorDialogException = dialogException;
       mErrorDialogMessage = dialogErrorMessage;
       cancel(false);

@@ -49,6 +49,7 @@ import nl.sogeti.android.gpstracker.tasks.xml.KmzSharing;
 import nl.sogeti.android.gpstracker.tasks.xml.OsmSharing;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.UnitsI18n;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -76,7 +77,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.Window;
@@ -93,8 +93,6 @@ import android.widget.Toast;
 
 public class ShareTrack extends Activity implements StatisticsDelegate
 {
-   private static final String TAG = "OGT.ShareTrack";
-
    private static final int EXPORT_TYPE_KMZ = 0;
    private static final int EXPORT_TYPE_GPX = 1;
    private static final int EXPORT_TYPE_TEXTLINE = 2;
@@ -384,7 +382,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             exportTextLine(textLine, target);
             break;
          default:
-            Log.e(TAG, "Failed to determine sharing type" + type);
+            Log.e(this, "Failed to determine sharing type" + type);
             break;
       }
    }
@@ -400,7 +398,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             new KmzCreator(this, mTrackUri, chosenFileName, new ShareProgressListener(chosenFileName)).execute();
             break;
          default:
-            Log.e(TAG, "Unable to determine target for sharing KMZ " + target);
+            Log.e(this, "Unable to determine target for sharing KMZ " + target);
             break;
       }
       ShareTrack.this.finish();
@@ -430,7 +428,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             sendToBreadcrumbs(mTrackUri, chosenFileName);
             break;
          default:
-            Log.e(TAG, "Unable to determine target for sharing GPX " + target);
+            Log.e(this, "Unable to determine target for sharing GPX " + target);
             break;
       }
    }
@@ -647,7 +645,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
       }
       catch (IOException e)
       {
-         Log.e(TAG, "Bitmap extra storing failed", e);
+         Log.e(ShareTrack.class, "Bitmap extra storing failed", e);
       }
       finally
       {
@@ -660,7 +658,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
          }
          catch (IOException e)
          {
-            Log.e(TAG, "Bitmap extra close failed", e);
+            Log.e(ShareTrack.class, "Bitmap extra close failed", e);
          }
       }
       return fileUri;
@@ -703,7 +701,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
             }
             catch (FileNotFoundException e)
             {
-               Log.e(TAG, "Failed reading image from file", e);
+               Log.e(this, "Failed reading image from file", e);
             }
             finally
             {
@@ -715,7 +713,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
                   }
                   catch (IOException e)
                   {
-                     Log.e(TAG, "Failed close image from file", e);
+                     Log.e(this, "Failed close image from file", e);
                   }
                }
             }
@@ -792,7 +790,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
 
       private void updateNotification()
       {
-         //         Log.d( "TAG", "Progress " + progress + " of " + goal );
+         //         Log.d( "this", "Progress " + progress + " of " + goal );
          if (mProgress > 0 && mProgress < Window.PROGRESS_END)
          {
             if ((mProgress * PROGRESS_STEPS) / Window.PROGRESS_END != barProgress)
@@ -822,7 +820,7 @@ public class ShareTrack extends Activity implements StatisticsDelegate
       @Override
       public void setIndeterminate(boolean indeterminate)
       {
-         Log.w(TAG, "Unsupported indeterminate progress display");
+         Log.w(this, "Unsupported indeterminate progress display");
       }
 
       @Override

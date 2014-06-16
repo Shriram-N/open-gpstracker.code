@@ -42,6 +42,7 @@ import nl.sogeti.android.gpstracker.content.GPStracking;
 import nl.sogeti.android.gpstracker.content.GPStracking.Media;
 import nl.sogeti.android.gpstracker.content.GPStracking.MetaData;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import nl.sogeti.android.gpstracker.util.io.MultipartStreamer;
 import oauth.signpost.basic.DefaultOAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -58,7 +59,6 @@ import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -72,7 +72,6 @@ public class OsmSharing extends GpxCreator
 
    public static final String OAUTH_TOKEN = "openstreetmap_oauth_token";
    public static final String OAUTH_TOKEN_SECRET = "openstreetmap_oauth_secret";
-   private static final String TAG = "OGT.OsmSharing";
    public static final String OSM_FILENAME = "OSM_Trace";
    private String responseText;
    private Uri mFileUri;
@@ -212,7 +211,7 @@ public class OsmSharing extends GpxCreator
 
       if (statusCode != 200)
       {
-         Log.e(TAG, "Failed to upload to error code " + statusCode + " " + responseText);
+         Log.e(this, "Failed to upload to error code " + statusCode + " " + responseText);
          String text = mContext.getString(R.string.osm_failed) + responseText;
          if (statusCode == 401)
          {
@@ -307,7 +306,7 @@ public class OsmSharing extends GpxCreator
       }
       catch (IOException e)
       {
-         Log.w(TAG, "Failed to close ", e);
+         Log.w(this, "Failed to close ", e);
       }
    }
 }

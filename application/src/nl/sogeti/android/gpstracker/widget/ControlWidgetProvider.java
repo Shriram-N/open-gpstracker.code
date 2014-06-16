@@ -32,6 +32,7 @@ import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.activity.ControlTracking;
 import nl.sogeti.android.gpstracker.activity.InsertNote;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -39,7 +40,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -53,7 +53,6 @@ public class ControlWidgetProvider extends AppWidgetProvider
 {
    private static final int BUTTON_TRACKINGCONTROL = 2;
    private static final int BUTTON_INSERTNOTE = 3;
-   private static final String TAG = "OGT.ControlWidgetProvider";
 
    static final ComponentName THIS_APPWIDGET = new ComponentName("nl.sogeti.android.gpstracker", "nl.sogeti.android.gpstracker.widget.ControlWidgetProvider");
    private static int mState;
@@ -66,20 +65,20 @@ public class ControlWidgetProvider extends AppWidgetProvider
    @Override
    public void onEnabled(Context context)
    {
-      //      Log.d(TAG, "onEnabled() ");
+      //      Log.d(this, "onEnabled() ");
       super.onEnabled(context);
    }
 
    @Override
    public void onDisabled(Context context)
    {
-      //      Log.d(TAG, "onDisabled() ");
+      //      Log.d(this, "onDisabled() ");
    }
 
    @Override
    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
    {
-      //      Log.d(TAG, "onDisabled() ");
+      //      Log.d(this, "onDisabled() ");
       // Update each requested appWidgetId
       RemoteViews view = buildUpdate(context, -1);
 
@@ -106,7 +105,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
     */
    private static void updateButtons(RemoteViews views, Context context)
    {
-      //      Log.d(TAG, "Updated the remote views to state " + mState);
+      //      Log.d(this, "Updated the remote views to state " + mState);
       switch (mState)
       {
          case Constants.LOGGING:
@@ -122,7 +121,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
             setEnableInsertNote(views, false);
             break;
          default:
-            Log.w(TAG, "Unknown logging state for widget: " + mState);
+            Log.w(ControlWidgetProvider.class, "Unknown logging state for widget: " + mState);
             break;
       }
    }
@@ -169,7 +168,7 @@ public class ControlWidgetProvider extends AppWidgetProvider
    @Override
    public void onReceive(Context context, Intent intent)
    {
-      //      Log.d(TAG, "Did recieve intent with action: " + intent.getAction());
+      //      Log.d(this, "Did recieve intent with action: " + intent.getAction());
       super.onReceive(context, intent);
       String action = intent.getAction();
       if (Constants.LOGGING_STATE_CHANGED_ACTION.equals(action))

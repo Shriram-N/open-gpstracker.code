@@ -28,15 +28,13 @@
  */
 package nl.sogeti.android.gpstracker.activity.mapproxy;
 
-import android.util.Log;
+import nl.sogeti.android.gpstracker.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapController;
 
 public class MapControllerProxy
 {
-
-   private static final String TAG = "OGT.MapControllerProxy";
    private MapController mMapController;
    private org.osmdroid.views.MapView mOpenStreetMapViewControllerSource;
    private GeoPoint mPostponedSetCenterPoint = null;
@@ -88,7 +86,7 @@ public class MapControllerProxy
          else if (mOpenStreetMapViewControllerSource != null)
          {
             org.osmdroid.util.GeoPoint geoPoint = new org.osmdroid.util.GeoPoint(point.getLatitudeE6(), point.getLongitudeE6());
-            Log.d(TAG, "Animate to " + geoPoint);
+            Log.d(this, "Animate to " + geoPoint);
             mOpenStreetMapViewControllerSource.getController().animateTo(geoPoint);
             mPostponedSetCenterPoint = point;
          }
@@ -110,7 +108,7 @@ public class MapControllerProxy
          else if (mOpenStreetMapViewControllerSource != null)
          {
             org.osmdroid.util.GeoPoint geoPoint = new org.osmdroid.util.GeoPoint(point.getLatitudeE6(), point.getLongitudeE6());
-            Log.d(TAG, "Set Center to " + geoPoint);
+            Log.d(this, "Set Center to " + geoPoint);
             mOpenStreetMapViewControllerSource.getController().setCenter(geoPoint);
             mPostponedSetCenterPoint = point;
          }
@@ -147,13 +145,13 @@ public class MapControllerProxy
    {
       if (mPostponedSetCenterPoint != null)
       {
-         Log.w(TAG, "mPostponedSetCenterPoint" + mPostponedSetCenterPoint);
+         Log.w(this, "mPostponedSetCenterPoint" + mPostponedSetCenterPoint);
          setCenter(mPostponedSetCenterPoint);
          mPostponedSetCenterPoint = null;
       }
       if (mPostponedSetZoom >= 0)
       {
-         Log.w(TAG, "mPostponedSetZoom" + mPostponedSetCenterPoint);
+         Log.w(this, "mPostponedSetZoom" + mPostponedSetCenterPoint);
          setZoom(mPostponedSetZoom);
          mPostponedSetZoom = -1;
       }

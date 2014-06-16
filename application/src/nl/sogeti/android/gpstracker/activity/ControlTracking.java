@@ -32,6 +32,7 @@ import nl.sogeti.android.gpstracker.R;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.service.logger.GPSLoggerServiceManager;
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -43,7 +44,6 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -57,7 +57,6 @@ import android.widget.Button;
 public class ControlTracking extends Activity
 {
    private static final int DIALOG_LOGCONTROL = 26;
-   private static final String TAG = "OGT.ControlTracking";
 
    private GPSLoggerServiceManager mLoggerServiceManager;
    private Button start;
@@ -233,7 +232,7 @@ public class ControlTracking extends Activity
             stop.setEnabled(true);
             break;
          default:
-            Log.w(TAG, String.format("State %d of logging, enabling and hope for the best....", state));
+            Log.w(this, String.format("State %d of logging, enabling and hope for the best....", state));
             start.setEnabled(false);
             pause.setEnabled(false);
             resume.setEnabled(false);

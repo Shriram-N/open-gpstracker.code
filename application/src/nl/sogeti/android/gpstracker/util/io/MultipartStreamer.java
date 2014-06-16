@@ -12,11 +12,11 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 
+import nl.sogeti.android.gpstracker.util.Log;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
-import android.util.Log;
 
 /**
  * This utility class provides an abstraction layer for sending multipart HTTP POST requests to a web server.
@@ -27,7 +27,6 @@ public class MultipartStreamer implements Closeable
 {
    private String boundary;
    private static final String LINE_FEED = "\r\n";
-   private static final String TAG = "MultipartStreamer";
    private String charset;
    private OutputStream outputStream;
    private PrintWriter writer;
@@ -190,7 +189,7 @@ public class MultipartStreamer implements Closeable
       }
       catch (IOException e)
       {
-         Log.w(TAG, "Failed to close ", e);
+         Log.w(this, "Failed to close ", e);
       }
    }
 
@@ -222,7 +221,7 @@ public class MultipartStreamer implements Closeable
       super.finalize();
       if (!flushed)
       {
-         Log.e(TAG, "Unflushed mime body garbage collected");
+         Log.e(this, "Unflushed mime body garbage collected");
       }
    }
 }

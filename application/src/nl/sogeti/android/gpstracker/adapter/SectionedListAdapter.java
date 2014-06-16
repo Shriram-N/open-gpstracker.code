@@ -43,7 +43,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 
 /**
- * Combines multiple Adapters into a sectioned ListAdapter 
+ * Combines multiple Adapters into a sectioned ListAdapter
  * 
  * @version $Id:$
  * @author rene (c) Apr 24, 2011, Sogeti B.V.
@@ -51,7 +51,6 @@ import android.widget.ListAdapter;
 public class SectionedListAdapter extends BaseAdapter
 {
    @SuppressWarnings("unused")
-   private static final String TAG = "OGT.SectionedListAdapter";
    private Map<String, BaseAdapter> mSections;
    private ArrayAdapter<String> mHeaders;
 
@@ -71,22 +70,22 @@ public class SectionedListAdapter extends BaseAdapter
    public void registerDataSetObserver(DataSetObserver observer)
    {
       super.registerDataSetObserver(observer);
-      for( Adapter adapter : mSections.values() )
+      for (Adapter adapter : mSections.values())
       {
          adapter.registerDataSetObserver(observer);
       }
    }
-   
+
    @Override
    public void unregisterDataSetObserver(DataSetObserver observer)
    {
       super.unregisterDataSetObserver(observer);
-      for( Adapter adapter : mSections.values() )
+      for (Adapter adapter : mSections.values())
       {
          adapter.unregisterDataSetObserver(observer);
       }
    }
-   
+
    /*
     * (non-Javadoc)
     * @see android.widget.Adapter#getCount()
@@ -119,7 +118,7 @@ public class SectionedListAdapter extends BaseAdapter
             return section;
          }
          countDown--;
-         
+
          if (countDown < adapter.getCount())
          {
             return adapter.getItem(countDown);
@@ -146,7 +145,7 @@ public class SectionedListAdapter extends BaseAdapter
             return position;
          }
          countDown--;
-         
+
          if (countDown < adapter.getCount())
          {
             long id = adapter.getItemId(countDown);
@@ -159,8 +158,7 @@ public class SectionedListAdapter extends BaseAdapter
 
    /*
     * (non-Javadoc)
-    * @see android.widget.Adapter#getView(int, android.view.View,
-    * android.view.ViewGroup)
+    * @see android.widget.Adapter#getView(int, android.view.View, android.view.ViewGroup)
     */
    @Override
    public View getView(final int position, View convertView, ViewGroup parent)
@@ -234,7 +232,7 @@ public class SectionedListAdapter extends BaseAdapter
    @Override
    public boolean isEnabled(int position)
    {
-      if( getItemViewType(position) == Constants.SECTIONED_HEADER_ITEM_VIEW_TYPE )
+      if (getItemViewType(position) == Constants.SECTIONED_HEADER_ITEM_VIEW_TYPE)
       {
          return false;
       }
@@ -245,16 +243,16 @@ public class SectionedListAdapter extends BaseAdapter
          {
             BaseAdapter adapter = mSections.get(section);
             countDown--;
-            int size = adapter.getCount() ;
+            int size = adapter.getCount();
 
             if (countDown < size)
             {
-              return adapter.isEnabled(countDown);
+               return adapter.isEnabled(countDown);
             }
             // otherwise jump into next section
             countDown -= size;
          }
       }
-      return false  ;
+      return false;
    }
 }

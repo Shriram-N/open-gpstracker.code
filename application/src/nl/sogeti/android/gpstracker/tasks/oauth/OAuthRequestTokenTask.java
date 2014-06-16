@@ -29,24 +29,21 @@
 package nl.sogeti.android.gpstracker.tasks.oauth;
 
 import nl.sogeti.android.gpstracker.util.Constants;
+import nl.sogeti.android.gpstracker.util.Log;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.OAuthProvider;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Log;
 
 /**
- * An asynchronous task that communicates with Twitter to retrieve a request
- * token. (OAuthGetRequestToken) After receiving the request token from Twitter,
- * pop a browser to the user to authorize the Request Token.
- * (OAuthAuthorizeToken)
+ * An asynchronous task that communicates with Twitter to retrieve a request token. (OAuthGetRequestToken) After receiving the request token from Twitter, pop a browser to the user to authorize the
+ * Request Token. (OAuthAuthorizeToken)
  */
 public class OAuthRequestTokenTask extends AsyncTask<Void, Void, Void>
 {
 
-   final String TAG = "OGT.OAuthRequestTokenTask";
    private Context context;
    private OAuthProvider provider;
    private OAuthConsumer consumer;
@@ -54,8 +51,7 @@ public class OAuthRequestTokenTask extends AsyncTask<Void, Void, Void>
    /**
     * We pass the OAuth consumer and provider.
     * 
-    * @param context Required to be able to start the intent to launch the
-    *           browser.
+    * @param context Required to be able to start the intent to launch the browser.
     * @param provider The OAuthProvider object
     * @param consumer The OAuthConsumer object
     */
@@ -67,8 +63,7 @@ public class OAuthRequestTokenTask extends AsyncTask<Void, Void, Void>
    }
 
    /**
-    * Retrieve the OAuth Request Token and present a browser to the user to
-    * authorize the token.
+    * Retrieve the OAuth Request Token and present a browser to the user to authorize the token.
     */
    @Override
    protected Void doInBackground(Void... params)
@@ -82,7 +77,7 @@ public class OAuthRequestTokenTask extends AsyncTask<Void, Void, Void>
       }
       catch (Exception e)
       {
-         Log.e(TAG, "Failed to start token request ", e);
+         Log.e(this, "Failed to start token request ", e);
          Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(Constants.OAUTH_CALLBACK_URL));
          intent.putExtra("ERROR", e.toString());
          context.startActivity(intent);
