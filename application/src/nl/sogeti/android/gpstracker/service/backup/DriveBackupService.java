@@ -23,11 +23,15 @@ import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.tasks.xml.GpxCreator;
 import nl.sogeti.android.gpstracker.tasks.xml.XmlCreator.ProgressListener;
 import android.app.Activity;
+import android.app.Service;
 import android.content.ContentUris;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -59,22 +63,35 @@ import com.google.common.io.ByteStreams;
  * 
  * @author rene (c) 9 jun. 2014, Sogeti B.V.
  */
-public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListener, ProgressListener, DownloadProgressListener
+public class DriveBackupService extends Service implements ConnectionCallbacks, OnConnectionFailedListener, ProgressListener, DownloadProgressListener
 {
 
    private static final String MIME_TYPE = "application/gpx";
    private static final String TAG = "DriveBackup";
    private static final String FOLDER_NAME = "OpenGPSTracker";
-   private Activity activity;
    private GoogleApiClient googleApiClient;
    private DriveId backupFolderId;
    private MetadataBuffer fileList;
    private Uri localFile;
    private DriveFile remoteFile;
+   private Activity activity;
 
-   public DriveBackup(LoggerMap activity)
+   public DriveBackupService()
    {
-      this.activity = activity;
+   }
+
+   @Override
+   public IBinder onBind(Intent intent)
+   {
+      return new LocalBinder();
+   }
+
+   public class LocalBinder extends Binder
+   {
+      DriveBackupService getService()
+      {
+         return DriveBackupService.this;
+      }
    }
 
    @Override
@@ -104,6 +121,41 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
       getBackupFolder();
    }
 
+   @Override
+   public void onConnectionSuspended(int arg0)
+   {
+      Log.d(TAG, "Stop backup");
+      stopBackup();
+   }
+
+   public void startBackup(Activity act)
+   {
+      this.activity = act;
+      if (googleApiClient == null)
+      {
+         googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
+      }
+      if (googleApiClient.isConnected())
+      {
+         getBackupFolder();
+      }
+      else
+      {
+         googleApiClient.connect();
+      }
+   }
+
+   public void decoupleBackup()
+   {
+      this.activity = null;
+   }
+
+   public void stopBackup()
+   {
+      this.activity = null;
+      this.googleApiClient.disconnect();
+   }
+
    private void getBackupFolder()
    {
       ResultCallback<MetadataBufferResult> rootFileListing = new RootListingCallback();
@@ -127,7 +179,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
       String name;
       try
       {
-         cursor = activity.getContentResolver().query(Tracks.CONTENT_URI, projection, null, null, order);
+         cursor = getContentResolver().query(Tracks.CONTENT_URI, projection, null, null, order);
          if (cursor.moveToFirst())
          {
             do
@@ -139,7 +191,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
                {
                   Uri trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, trackId);
                   Log.d(TAG, "Ready to backup " + fileName + " of " + trackUri);
-                  new GpxCreator(activity, trackUri, fileName, true, this).execute();
+                  new GpxCreator(this, trackUri, fileName, true, this).execute();
                   break;
                }
             }
@@ -187,42 +239,44 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
    }
 
    @Override
-   public void onConnectionSuspended(int arg0)
-   {
-      Log.d(TAG, "Stop backup");
-   }
-
-   public void setGoogleApiClient(GoogleApiClient googleApiClient)
-   {
-      this.googleApiClient = googleApiClient;
-   }
-
-   @Override
    public void setIndeterminate(boolean indeterminate)
    {
       Log.d(TAG, "setIndeterminate(indeterminate" + indeterminate + ")");
-      activity.setProgressBarIndeterminate(indeterminate);
+      if (activity != null)
+      {
+         activity.setProgressBarIndeterminate(indeterminate);
+      }
+
    }
 
    @Override
    public void started()
    {
       Log.d(TAG, "started()");
-      activity.setProgressBarVisibility(true);
+      if (activity != null)
+      {
+         activity.setProgressBarVisibility(true);
+      }
    }
 
    @Override
    public void setProgress(int value)
    {
       Log.d(TAG, "setProgress(value" + value + ")");
-      activity.setProgress(value);
+      if (activity != null)
+      {
+         activity.setProgress(value);
+      }
    }
 
    @Override
    public void onProgress(long bytesDownloaded, long bytesExpected)
    {
-      int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
-      activity.setProgress(value);
+      if (activity != null)
+      {
+         int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
+         activity.setProgress(value);
+      }
    }
 
    @Override
@@ -341,7 +395,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
          if (result.getStatus().isSuccess())
          {
             remoteFile = result.getDriveFile();
-            remoteFile.openContents(googleApiClient, DriveFile.MODE_WRITE_ONLY, DriveBackup.this).setResultCallback(new ContentWriter());
+            remoteFile.openContents(googleApiClient, DriveFile.MODE_WRITE_ONLY, DriveBackupService.this).setResultCallback(new ContentWriter());
 
          }
          else
@@ -364,7 +418,7 @@ public class DriveBackup implements ConnectionCallbacks, OnConnectionFailedListe
             OutputStream out = null;
             try
             {
-               in = activity.getContentResolver().openInputStream(localFile);
+               in = getContentResolver().openInputStream(localFile);
                out = results.getContents().getOutputStream();
                long count = ByteStreams.copy(in, out);
                Log.d(TAG, "Copied " + count + " bytes");

@@ -194,13 +194,19 @@
         <service
             android:name="nl.sogeti.android.gpstracker.service.logger.GPSLoggerService"
             android:enabled="true"
+            android:exported="true"
             android:permission="android.permission.ACCESS_FINE_LOCATION" >
             <intent-filter android:label="GPS logger" >
-                <action android:name="nl.sogeti.android.gpstracker.intent.action.GPSLoggerService" >
-                </action>
+                <action android:name="nl.sogeti.android.gpstracker.intent.action.GPSLoggerService" />
             </intent-filter>
         </service>
-        <service android:name="nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService" />
+        <service
+            android:name="nl.sogeti.android.gpstracker.service.breadcrumbs.BreadcrumbsService"
+            android:exported="false" />
+        <service
+            android:name="nl.sogeti.android.gpstracker.service.backup.DriveBackupService"
+            android:exported="false" >
+        </service>
 
         <provider
             android:name="nl.sogeti.android.gpstracker.content.GPStrackingProvider"

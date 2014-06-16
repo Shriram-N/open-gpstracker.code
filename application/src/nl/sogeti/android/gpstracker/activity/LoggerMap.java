@@ -39,7 +39,9 @@ import nl.sogeti.android.gpstracker.content.GPStracking.Media;
 import nl.sogeti.android.gpstracker.content.GPStracking.Segments;
 import nl.sogeti.android.gpstracker.content.GPStracking.Tracks;
 import nl.sogeti.android.gpstracker.content.GPStracking.Waypoints;
-import nl.sogeti.android.gpstracker.service.backup.DriveBackup;
+import nl.sogeti.android.gpstracker.service.backup.DriveBackupService;
+import nl.sogeti.android.gpstracker.service.backup.DriveBinder;
+import nl.sogeti.android.gpstracker.service.backup.DriveBinder.Listener;
 import nl.sogeti.android.gpstracker.service.logger.GPSLoggerServiceManager;
 import nl.sogeti.android.gpstracker.util.Constants;
 import nl.sogeti.android.gpstracker.util.UnitsI18n;
@@ -87,8 +89,6 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Drive;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 
@@ -98,7 +98,7 @@ import com.google.android.maps.MapActivity;
  * @version $Id$
  * @author rene (c) Jan 18, 2009, Sogeti B.V.
  */
-public class LoggerMap extends MapActivity
+public class LoggerMap extends MapActivity implements Listener
 {
    private static final String INSTANCE_E6LONG = "e6long";
    private static final String INSTANCE_E6LAT = "e6lat";
@@ -169,7 +169,7 @@ public class LoggerMap extends MapActivity
     */
    private Runnable mServiceConnected;
    private Runnable speedCalculator;
-   private GoogleApiClient googleApiClient;
+   private DriveBinder driveBinder;
 
    /**
     * Called when the activity is first created.
@@ -224,6 +224,8 @@ public class LoggerMap extends MapActivity
 
       createListeners();
       onRestoreInstanceState(load);
+
+      driveBinder = new DriveBinder(this);
    }
 
    @Override
@@ -314,9 +316,11 @@ public class LoggerMap extends MapActivity
          Log.w(TAG, "onDestroy(): Released lock to keep screen on!");
       }
       mUnits = null;
-      if (googleApiClient != null)
+      DriveBackupService service = driveBinder.getService();
+      if (service != null)
       {
-         googleApiClient.disconnect();
+         service.decoupleBackup();
+         driveBinder.endBind(this);
       }
    }
 
@@ -753,7 +757,7 @@ public class LoggerMap extends MapActivity
          case DIALOG_DRIVE:
             if (resultCode == RESULT_OK)
             {
-               googleApiClient.connect();
+               createDriveBackup();
             }
             break;
          default:
@@ -770,16 +774,14 @@ public class LoggerMap extends MapActivity
          boolean choice = mSharedPreferences.getBoolean(Constants.DRIVE_BACKUP, true);
          if (choice)
          {
-            if (googleApiClient == null)
+            DriveBackupService service = driveBinder.getService();
+            if (service == null)
             {
-               DriveBackup backup = new DriveBackup(this);
-               googleApiClient = new GoogleApiClient.Builder(this).addApi(Drive.API).addScope(Drive.SCOPE_FILE).addConnectionCallbacks(backup).addOnConnectionFailedListener(backup).build();
-               backup.setGoogleApiClient(googleApiClient);
-               googleApiClient.connect();
+               driveBinder.startBind(this);
             }
             else
             {
-               googleApiClient.reconnect();
+               service.startBackup(this);
             }
          }
       }
@@ -787,6 +789,12 @@ public class LoggerMap extends MapActivity
       {
          showDialog(DIALOG_DRIVE);
       }
+   }
+
+   @Override
+   public void didBindService(DriveBackupService service)
+   {
+      createDriveBackup();
    }
 
    private void setTrafficOverlay(boolean b)
@@ -1729,4 +1737,5 @@ public class LoggerMap extends MapActivity
       mMediaAdapter = mediaAdapter;
       showDialog(LoggerMap.DIALOG_URIS);
    }
+
 }
