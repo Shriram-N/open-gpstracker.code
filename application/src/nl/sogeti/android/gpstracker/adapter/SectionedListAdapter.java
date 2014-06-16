@@ -50,7 +50,6 @@ import android.widget.ListAdapter;
  */
 public class SectionedListAdapter extends BaseAdapter
 {
-   @SuppressWarnings("unused")
    private Map<String, BaseAdapter> mSections;
    private ArrayAdapter<String> mHeaders;
 

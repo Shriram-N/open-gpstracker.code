@@ -523,7 +523,7 @@ public class GPStrackingProvider extends ContentProvider
       switch (match)
       {
          case TRACK_ID:
-            trackId = new Long(uri.getLastPathSegment()).longValue();
+            trackId = Long.valueOf(uri.getLastPathSegment()).longValue();
             String name = givenValues.getAsString(Tracks.NAME);
             updates = mDbHelper.updateTrack(trackId, name);
             break;
@@ -575,13 +575,13 @@ public class GPStrackingProvider extends ContentProvider
       switch (match)
       {
          case GPStrackingProvider.TRACK_ID:
-            affected = this.mDbHelper.deleteTrack(new Long(uri.getLastPathSegment()).longValue());
+            affected = this.mDbHelper.deleteTrack(Long.valueOf(uri.getLastPathSegment()).longValue());
             break;
          case GPStrackingProvider.MEDIA_ID:
-            affected = this.mDbHelper.deleteMedia(new Long(uri.getLastPathSegment()).longValue());
+            affected = this.mDbHelper.deleteMedia(Long.valueOf(uri.getLastPathSegment()).longValue());
             break;
          case GPStrackingProvider.METADATA_ID:
-            affected = this.mDbHelper.deleteMetaData(new Long(uri.getLastPathSegment()).longValue());
+            affected = this.mDbHelper.deleteMetaData(Long.valueOf(uri.getLastPathSegment()).longValue());
             break;
          default:
             affected = 0;
