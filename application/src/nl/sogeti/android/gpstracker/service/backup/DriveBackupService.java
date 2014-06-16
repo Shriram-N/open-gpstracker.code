@@ -68,7 +68,7 @@ import com.google.common.io.ByteStreams;
  * 
  * @author rene (c) 9 jun. 2014, Sogeti B.V.
  */
-public class DriveBackupService extends Service implements ConnectionCallbacks, OnConnectionFailedListener, ProgressListener, DownloadProgressListener
+public class DriveBackupService extends Service implements ConnectionCallbacks, OnConnectionFailedListener, DownloadProgressListener
 {
 
    private static final String MIME_TYPE = "application/gpx";
@@ -114,7 +114,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       }
       if (googleApiClient.isConnected())
       {
-         getBackupFolder();
+         listRootChildren();
       }
       else
       {
@@ -133,6 +133,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       if (googleApiClient != null)
       {
          googleApiClient.disconnect();
+         googleApiClient = null;
       }
       handler.post(new Runnable()
          {
@@ -176,7 +177,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    public void onConnected(Bundle bundle)
    {
       Log.d(this, "Start backup");
-      getBackupFolder();
+      listRootChildren();
    }
 
    @Override
@@ -186,60 +187,130 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       stopBackup();
    }
 
-   private void getBackupFolder()
+   private void listRootChildren()
    {
-      ResultCallback<MetadataBufferResult> rootFileListing = new RootListingCallback();
-      Drive.DriveApi.getRootFolder(googleApiClient).listChildren(googleApiClient).setResultCallback(rootFileListing);
-   }
-
-   private void listCompletedBackups()
-   {
-      DriveFolder folder = Drive.DriveApi.getFolder(googleApiClient, backupFolderId);
-      Query query = new Query.Builder().addFilter(Filters.eq(SearchableField.MIME_TYPE, MIME_TYPE)).build();
-      ResultCallback<MetadataBufferResult> gpxListingRetrievedCallback = new GpxListingRetrievedCallback();
-      folder.queryChildren(googleApiClient, query).setResultCallback(gpxListingRetrievedCallback);
-   }
-
-   private void backupNextTrack()
-   {
-      String order = Tracks._ID;
-      String[] projection = new String[] { Tracks._ID, Tracks.NAME };
-      Cursor cursor = null;
-      long trackId;
-      String name;
-      try
+      if (googleApiClient != null)
       {
-         cursor = getContentResolver().query(Tracks.CONTENT_URI, projection, null, null, order);
-         if (cursor.moveToFirst())
+         ResultCallback<MetadataBufferResult> rootFileListing = new RootListingCallback();
+         Drive.DriveApi.getRootFolder(googleApiClient).listChildren(googleApiClient).setResultCallback(rootFileListing);
+      }
+   }
+
+   private void createAppFolder()
+   {
+      if (googleApiClient != null)
+      {
+         MetadataChangeSet changeSet = new MetadataChangeSet.Builder().setTitle(FOLDER_NAME).build();
+         FolderCreatedCallback folderCreatedCallback = new FolderCreatedCallback();
+         Drive.DriveApi.getRootFolder(googleApiClient).createFolder(googleApiClient, changeSet).setResultCallback(folderCreatedCallback);
+      }
+   }
+
+   private void listAppFolderChildern()
+   {
+      if (googleApiClient != null)
+      {
+         DriveFolder folder = Drive.DriveApi.getFolder(googleApiClient, backupFolderId);
+         Query query = new Query.Builder().addFilter(Filters.eq(SearchableField.MIME_TYPE, MIME_TYPE)).build();
+         ResultCallback<MetadataBufferResult> gpxListingRetrievedCallback = new GpxListingRetrievedCallback();
+         folder.queryChildren(googleApiClient, query).setResultCallback(gpxListingRetrievedCallback);
+      }
+   }
+
+   private void pickTrackForBackup()
+   {
+      if (googleApiClient != null)
+      {
+         String order = Tracks._ID;
+         String[] projection = new String[] { Tracks._ID, Tracks.NAME };
+         Cursor cursor = null;
+         long trackId;
+         String name;
+         try
          {
-            do
+            cursor = getContentResolver().query(Tracks.CONTENT_URI, projection, null, null, order);
+            if (cursor.moveToFirst())
             {
-               trackId = cursor.getLong(0);
-               name = cursor.getString(1);
-               String fileName = toDriveTitle(trackId, name);
-               if (!isStoredOnDrive(fileName))
+               do
                {
-                  Uri trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, trackId);
-                  Log.d(this, "Ready to backup " + fileName + " of " + trackUri);
-                  new GpxCreator(this, trackUri, fileName, true, this).execute();
-                  break;
+                  trackId = cursor.getLong(0);
+                  name = cursor.getString(1);
+                  String fileName = toDriveTitle(trackId, name);
+                  if (!isStoredOnDrive(fileName))
+                  {
+                     Uri trackUri = ContentUris.withAppendedId(Tracks.CONTENT_URI, trackId);
+                     Log.d(this, "Ready to backup " + fileName + " of " + trackUri);
+                     new GpxCreator(this, trackUri, fileName, true, new GpxProgressListener()).execute();
+                     break;
+                  }
                }
+               while (cursor.moveToNext());
             }
-            while (cursor.moveToNext());
          }
-      }
-      finally
-      {
-         if (cursor != null)
+         finally
          {
-            cursor.close();
+            if (cursor != null)
+            {
+               cursor.close();
+            }
          }
       }
    }
 
-   private void createTrackContents()
+   private void newTrackContents()
    {
-      Drive.DriveApi.newContents(googleApiClient).setResultCallback(new ContentsCreate());
+      if (googleApiClient != null)
+      {
+         Drive.DriveApi.newContents(googleApiClient).setResultCallback(new ContentsCreate());
+      }
+   }
+
+   private void createFile(ContentsResult result)
+   {
+      if (googleApiClient != null)
+      {
+         DriveFolder folder = Drive.DriveApi.getFolder(googleApiClient, backupFolderId);
+         MetadataChangeSet changeSet = new MetadataChangeSet.Builder().setTitle(localFile.getLastPathSegment()).setMimeType(MIME_TYPE).setStarred(false).build();
+         folder.createFile(googleApiClient, changeSet, result.getContents()).setResultCallback(new FileCallback());
+      }
+   }
+
+   private void openTrackContents()
+   {
+      if (googleApiClient != null)
+      {
+         remoteFile.openContents(googleApiClient, DriveFile.MODE_WRITE_ONLY, DriveBackupService.this).setResultCallback(new ContentWriter());
+      }
+   }
+
+   private void writeContents(ContentsResult results)
+   {
+      if (googleApiClient != null)
+      {
+         InputStream in = null;
+         OutputStream out = null;
+         try
+         {
+            in = getContentResolver().openInputStream(localFile);
+            out = results.getContents().getOutputStream();
+            long count = ByteStreams.copy(in, out);
+            Log.d(this, "Copied " + count + " bytes");
+         }
+         catch (FileNotFoundException e)
+         {
+            Log.e(this, "Failed to upload contents", e);
+         }
+         catch (IOException e)
+         {
+            Log.e(this, "Failed to upload contents", e);
+         }
+         finally
+         {
+            close(in);
+            close(out);
+         }
+         remoteFile.commitAndCloseContents(googleApiClient, results.getContents()).setResultCallback(new FileWrittenCallback());
+      }
    }
 
    private boolean isStoredOnDrive(String filename)
@@ -252,7 +323,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          if (localTitle.equals(remoteTitle))
          {
             Log.d(this, "Found StoredOnDrive(local:'" + localTitle + "' remote '" + remoteTitle + "')");
-            isStored = true;
+            isStored = remote.getFileSize() > 0;
             break;
          }
       }
@@ -268,34 +339,18 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       return String.format("%d_%s", id, name.trim());
    }
 
-   @Override
-   public void setIndeterminate(boolean indeterminate)
+   private void close(Closeable closeable)
    {
-      Log.d(this, "setIndeterminate(indeterminate" + indeterminate + ")");
-      if (activity != null)
+      if (closeable != null)
       {
-         activity.setProgressBarIndeterminate(indeterminate);
-      }
-
-   }
-
-   @Override
-   public void started()
-   {
-      Log.d(this, "started()");
-      if (activity != null)
-      {
-         activity.setProgressBarVisibility(true);
-      }
-   }
-
-   @Override
-   public void setProgress(int value)
-   {
-      Log.d(this, "setProgress(value" + value + ")");
-      if (activity != null)
-      {
-         activity.setProgress(value);
+         try
+         {
+            closeable.close();
+         }
+         catch (IOException e)
+         {
+            Log.e(this, "Failed to close " + closeable);
+         }
       }
    }
 
@@ -307,22 +362,6 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
          activity.setProgress(value);
       }
-   }
-
-   @Override
-   public void finished(Uri result)
-   {
-      Log.d(this, "finished(result" + result + ")");
-      activity.setProgressBarVisibility(false);
-      localFile = result;
-      createTrackContents();
-   }
-
-   @Override
-   public void showError(String task, String errorMessage, Exception exception)
-   {
-      Log.d(this, "showError(errorMessage" + errorMessage + ")");
-      //TODO continue
    }
 
    private class RootListingCallback implements ResultCallback<MetadataBufferResult>
@@ -338,7 +377,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
                if (meta.isFolder() && meta.isEditable() && FOLDER_NAME.equals(meta.getTitle()))
                {
                   backupFolderId = meta.getDriveId();
-                  listCompletedBackups();
+                  listAppFolderChildern();
                   break;
                }
             }
@@ -346,11 +385,8 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
 
             if (backupFolderId == null)
             {
-               MetadataChangeSet changeSet = new MetadataChangeSet.Builder().setTitle(FOLDER_NAME).build();
-               FolderCreatedCallback folderCreatedCallback = new FolderCreatedCallback();
-               Drive.DriveApi.getRootFolder(googleApiClient).createFolder(googleApiClient, changeSet).setResultCallback(folderCreatedCallback);
+               createAppFolder();
             }
-
          }
          else
          {
@@ -368,7 +404,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          if (result.getStatus().isSuccess())
          {
             backupFolderId = result.getDriveFolder().getDriveId();
-            listCompletedBackups();
+            listAppFolderChildern();
          }
          else
          {
@@ -386,7 +422,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          if (result.getStatus().isSuccess())
          {
             fileList = result.getMetadataBuffer();
-            backupNextTrack();
+            pickTrackForBackup();
          }
          else
          {
@@ -398,6 +434,57 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
 
    }
 
+   public class GpxProgressListener implements ProgressListener
+   {
+
+      @Override
+      public void setIndeterminate(boolean indeterminate)
+      {
+         Log.d(this, "setIndeterminate(indeterminate" + indeterminate + ")");
+         if (activity != null)
+         {
+            activity.setProgressBarIndeterminate(indeterminate);
+         }
+
+      }
+
+      @Override
+      public void started()
+      {
+         Log.d(this, "started()");
+         if (activity != null)
+         {
+            activity.setProgressBarVisibility(true);
+         }
+      }
+
+      @Override
+      public void setProgress(int value)
+      {
+         Log.d(this, "setProgress(value" + value + ")");
+         if (activity != null)
+         {
+            activity.setProgress(value);
+         }
+      }
+
+      @Override
+      public void finished(Uri result)
+      {
+         Log.d(this, "finished(result" + result + ")");
+         activity.setProgressBarVisibility(false);
+         localFile = result;
+         newTrackContents();
+      }
+
+      @Override
+      public void showError(String task, String errorMessage, Exception exception)
+      {
+         Log.d(this, "showError(errorMessage" + errorMessage + ")");
+         //TODO continue
+      }
+   }
+
    private class ContentsCreate implements ResultCallback<ContentsResult>
    {
       @Override
@@ -405,9 +492,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       {
          if (result.getStatus().isSuccess())
          {
-            DriveFolder folder = Drive.DriveApi.getFolder(googleApiClient, backupFolderId);
-            MetadataChangeSet changeSet = new MetadataChangeSet.Builder().setTitle(localFile.getLastPathSegment()).setMimeType(MIME_TYPE).setStarred(false).build();
-            folder.createFile(googleApiClient, changeSet, result.getContents()).setResultCallback(new FileCallback());
+            createFile(result);
          }
          else
          {
@@ -425,8 +510,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          if (result.getStatus().isSuccess())
          {
             remoteFile = result.getDriveFile();
-            remoteFile.openContents(googleApiClient, DriveFile.MODE_WRITE_ONLY, DriveBackupService.this).setResultCallback(new ContentWriter());
-
+            openTrackContents();
          }
          else
          {
@@ -444,29 +528,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       {
          if (results.getStatus().isSuccess())
          {
-            InputStream in = null;
-            OutputStream out = null;
-            try
-            {
-               in = getContentResolver().openInputStream(localFile);
-               out = results.getContents().getOutputStream();
-               long count = ByteStreams.copy(in, out);
-               Log.d(this, "Copied " + count + " bytes");
-            }
-            catch (FileNotFoundException e)
-            {
-               Log.e(this, "Failed to upload contents", e);
-            }
-            catch (IOException e)
-            {
-               Log.e(this, "Failed to upload contents", e);
-            }
-            finally
-            {
-               close(in);
-               close(out);
-            }
-            remoteFile.commitAndCloseContents(googleApiClient, results.getContents()).setResultCallback(new FileWrittenCallback());
+            writeContents(results);
          }
          else
          {
@@ -474,36 +536,22 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          }
       }
 
-      public class FileWrittenCallback implements ResultCallback<Status>
-      {
+   }
 
-         @Override
-         public void onResult(Status results)
+   public class FileWrittenCallback implements ResultCallback<Status>
+   {
+
+      @Override
+      public void onResult(Status results)
+      {
+         if (results.getStatus().isSuccess())
          {
-            if (results.getStatus().isSuccess())
-            {
-               Log.e(this, "Succes with uploading... " + localFile.getLastPathSegment());
-               listCompletedBackups();
-            }
-            else
-            {
-               Log.e(this, "Failed to close the file contents");
-            }
+            Log.e(this, "Succes with uploading... " + localFile.getLastPathSegment());
+            listAppFolderChildern();
          }
-      }
-
-      private void close(Closeable closeable)
-      {
-         if (closeable != null)
+         else
          {
-            try
-            {
-               closeable.close();
-            }
-            catch (IOException e)
-            {
-               Log.e(this, "Failed to close " + closeable);
-            }
+            Log.e(this, "Failed to close the file contents");
          }
       }
    }
