@@ -331,7 +331,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
    {
       SQLiteDatabase sqldb = getWritableDatabase();
       int affected = 0;
-      Cursor cursor = null;
+      Cursor segmentCursor = null, metaCursor = null;
       long segmentId = -1;
       long metadataId = -1;
 
@@ -339,15 +339,15 @@ public class DatabaseHelper extends SQLiteOpenHelper
       {
          sqldb.beginTransaction();
          // Iterate on each segement to delete each
-         cursor = sqldb.query(Segments.TABLE, new String[] { Segments._ID }, Segments.TRACK + "= ?", new String[] { String.valueOf(trackId) }, null, null, null, null);
-         if (cursor.moveToFirst())
+         segmentCursor = sqldb.query(Segments.TABLE, new String[] { Segments._ID }, Segments.TRACK + "= ?", new String[] { String.valueOf(trackId) }, null, null, null, null);
+         if (segmentCursor.moveToFirst())
          {
             do
             {
-               segmentId = cursor.getLong(0);
+               segmentId = segmentCursor.getLong(0);
                affected += deleteSegment(sqldb, trackId, segmentId);
             }
-            while (cursor.moveToNext());
+            while (segmentCursor.moveToNext());
          }
          else
          {
@@ -358,24 +358,28 @@ public class DatabaseHelper extends SQLiteOpenHelper
          // Delete remaining meta-data
          affected += sqldb.delete(MetaData.TABLE, MetaData.TRACK + "= ?", new String[] { String.valueOf(trackId) });
 
-         cursor = sqldb.query(MetaData.TABLE, new String[] { MetaData._ID }, MetaData.TRACK + "= ?", new String[] { String.valueOf(trackId) }, null, null, null, null);
-         if (cursor.moveToFirst())
+         metaCursor = sqldb.query(MetaData.TABLE, new String[] { MetaData._ID }, MetaData.TRACK + "= ?", new String[] { String.valueOf(trackId) }, null, null, null, null);
+         if (metaCursor.moveToFirst())
          {
             do
             {
-               metadataId = cursor.getLong(0);
+               metadataId = metaCursor.getLong(0);
                affected += deleteMetaData(metadataId);
             }
-            while (cursor.moveToNext());
+            while (metaCursor.moveToNext());
          }
 
          sqldb.setTransactionSuccessful();
       }
       finally
       {
-         if (cursor != null)
+         if (metaCursor != null)
          {
-            cursor.close();
+            metaCursor.close();
+         }
+         if (segmentCursor != null)
+         {
+            segmentCursor.close();
          }
          if (sqldb.inTransaction())
          {
