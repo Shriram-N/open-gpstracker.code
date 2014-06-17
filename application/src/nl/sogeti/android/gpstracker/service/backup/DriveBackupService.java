@@ -362,21 +362,18 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    @Override
    public void onProgress(long bytesDownloaded, long bytesExpected)
    {
-      if (activity != null)
-      {
-         final int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
-         if (activity != null)
+      final int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
+      mainHandler.post(new Runnable()
          {
-            mainHandler.post(new Runnable()
+            @Override
+            public void run()
+            {
+               if (activity != null)
                {
-                  @Override
-                  public void run()
-                  {
-                     activity.setProgress(value);
-                  }
-               });
-         }
-      }
+                  activity.setProgress(value);
+               }
+            }
+         });
    }
 
    private class RootListingCallback implements ResultCallback<MetadataBufferResult>
@@ -456,51 +453,53 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       public void setIndeterminate(final boolean indeterminate)
       {
          Log.d(this, "setIndeterminate(indeterminate" + indeterminate + ")");
-         if (activity != null)
-         {
-            mainHandler.post(new Runnable()
+         mainHandler.post(new Runnable()
+            {
+               @Override
+               public void run()
                {
-                  @Override
-                  public void run()
+                  if (activity != null)
                   {
                      activity.setProgressBarIndeterminate(indeterminate);
                   }
-               });
-         }
+               }
+            });
       }
 
       @Override
       public void started()
       {
          Log.d(this, "started()");
-         if (activity != null)
-         {
-            mainHandler.post(new Runnable()
+
+         mainHandler.post(new Runnable()
+            {
+               @Override
+               public void run()
                {
-                  @Override
-                  public void run()
+                  if (activity != null)
                   {
                      activity.setProgressBarVisibility(true);
                   }
-               });
-         }
+               }
+            });
       }
 
       @Override
       public void setProgress(final int value)
       {
          Log.d(this, "setProgress(value" + value + ")");
-         if (activity != null)
-         {
-            mainHandler.post(new Runnable()
+
+         mainHandler.post(new Runnable()
+            {
+               @Override
+               public void run()
                {
-                  @Override
-                  public void run()
+                  if (activity != null)
                   {
                      activity.setProgress(value);
                   }
-               });
-         }
+               }
+            });
       }
 
       @Override
