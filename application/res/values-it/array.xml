@@ -22,8 +22,6 @@
     <string-array name="trackcoloring_choices">
         <item>Verde</item>
         <item>Rosso</item>
-        <item>Velocità</item>
-        <item>Velocità media</item>
         <item>Punto</item>
     </string-array>
     

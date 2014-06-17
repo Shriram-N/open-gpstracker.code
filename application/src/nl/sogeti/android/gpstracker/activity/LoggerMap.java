@@ -1287,33 +1287,12 @@ public class LoggerMap extends MapActivity implements Listener
       int trackColoringMethod = Integer.valueOf(mSharedPreferences.getString(Constants.TRACKCOLORING, "3")).intValue();
       View speedbar = findViewById(R.id.speedbar);
 
-      if (trackColoringMethod == SegmentOverlay.DRAW_MEASURED || trackColoringMethod == SegmentOverlay.DRAW_CALCULATED)
+      speedbar.setVisibility(View.INVISIBLE);
+      for (int i = 0; i < mSpeedtexts.length; i++)
       {
-         // mAverageSpeed is set to 0 if unknown or to trigger an recalculation here
-         if (mAverageSpeed == 0.0)
-         {
-            mHandler.removeCallbacks(speedCalculator);
-            mHandler.post(speedCalculator);
-         }
-         else
-         {
-            drawSpeedTexts(mAverageSpeed);
+         mSpeedtexts[i].setVisibility(View.INVISIBLE);
+      }
 
-            speedbar.setVisibility(View.VISIBLE);
-            for (int i = 0; i < mSpeedtexts.length; i++)
-            {
-               mSpeedtexts[i].setVisibility(View.VISIBLE);
-            }
-         }
-      }
-      else
-      {
-         speedbar.setVisibility(View.INVISIBLE);
-         for (int i = 0; i < mSpeedtexts.length; i++)
-         {
-            mSpeedtexts[i].setVisibility(View.INVISIBLE);
-         }
-      }
       List< ? > overlays = mMapView.getOverlays();
       for (Object overlay : overlays)
       {

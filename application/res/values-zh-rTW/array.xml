@@ -27,8 +27,6 @@
       name="trackcoloring_choices">
       <item>綠色</item>
       <item>紅色</item>
-      <item>速度</item>
-      <item>平均速度</item>
       <item>路點</item>
    </string-array>
 

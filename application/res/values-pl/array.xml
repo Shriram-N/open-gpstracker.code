@@ -27,8 +27,6 @@
       name="trackcoloring_choices">
       <item>Zielony</item>
       <item>Czerwony</item>
-      <item>Prędkość</item>
-      <item>Średnia prędkość</item>
       <item>Punkty orientacyjne</item>
    </string-array>
 

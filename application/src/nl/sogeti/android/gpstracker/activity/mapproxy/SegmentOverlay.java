@@ -54,12 +54,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ComposeShader;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.PorterDuff.Mode;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.graphics.Shader.TileMode;
@@ -90,14 +88,12 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
    public static final int LAST_SEGMENT = 2;
    public static final int DRAW_GREEN = 0;
    public static final int DRAW_RED = 1;
-   public static final int DRAW_MEASURED = 2;
-   public static final int DRAW_CALCULATED = 3;
    public static final int DRAW_DOTS = 4;
    private static final float MINIMUM_PX_DISTANCE = 15;
 
    private static Map<Integer, Bitmap> sBitmapCache = new HashMap<Integer, Bitmap>();;
 
-   private int mTrackColoringMethod = DRAW_CALCULATED;
+   private int mTrackColoringMethod = DRAW_RED;
 
    private ContentResolver mResolver;
    private LoggerMap mLoggerMap;
@@ -115,7 +111,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
    private Vector<DotVO> mDotPathCalculation;
    private Path mPath;
    private Path mPathCalculation;
-   private Shader mShader;
    private Vector<MediaVO> mMediaPath;
    private Vector<MediaVO> mMediaPathCalculation;
 
@@ -301,8 +296,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
    {
       switch (mTrackColoringMethod)
       {
-         case (DRAW_CALCULATED):
-         case (DRAW_MEASURED):
          case (DRAW_RED):
          case (DRAW_GREEN):
             drawPath(canvas);
@@ -349,8 +342,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
 
          switch (mTrackColoringMethod)
          {
-            case (DRAW_CALCULATED):
-            case (DRAW_MEASURED):
             case (DRAW_RED):
             case (DRAW_GREEN):
                calculatePath();
@@ -382,8 +373,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
    {
       mDotPathCalculation.clear();
       this.mPathCalculation.rewind();
-
-      this.mShader = null;
 
       GeoPoint geoPoint;
       this.mPrevLocation = null;
@@ -419,24 +408,11 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
                continue;
             }
 
-            double speed = -1d;
             switch (mTrackColoringMethod)
             {
                case DRAW_GREEN:
                case DRAW_RED:
-                  lineToGeoPoint(geoPoint, speed);
-                  break;
-               case DRAW_MEASURED:
-                  lineToGeoPoint(geoPoint, mWaypointsCursor.getDouble(2));
-                  break;
-               case DRAW_CALCULATED:
-                  this.mPrevLocation = this.mLocation;
-                  this.mLocation = new Location(this.getClass().getName());
-                  this.mLocation.setLatitude(mWaypointsCursor.getDouble(0));
-                  this.mLocation.setLongitude(mWaypointsCursor.getDouble(1));
-                  this.mLocation.setTime(mWaypointsCursor.getLong(3));
-                  speed = calculateSpeedBetweenLocations(this.mPrevLocation, this.mLocation);
-                  lineToGeoPoint(geoPoint, speed);
+                  lineToGeoPoint(geoPoint);
                   break;
                default:
                   Log.w(this, "Unknown coloring method");
@@ -608,20 +584,13 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
    {
       switch (mTrackColoringMethod)
       {
-         case (DRAW_CALCULATED):
-         case (DRAW_MEASURED):
-            routePaint.setShader(this.mShader);
-            break;
          case (DRAW_RED):
-            routePaint.setShader(null);
             routePaint.setColor(Color.RED);
             break;
          case (DRAW_GREEN):
-            routePaint.setShader(null);
             routePaint.setColor(Color.GREEN);
             break;
          default:
-            routePaint.setShader(null);
             routePaint.setColor(Color.YELLOW);
             break;
       }
@@ -769,24 +738,14 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
       }
    }
 
-   private void lineToGeoPoint(GeoPoint geoPoint, double speed)
+   private void lineToGeoPoint(GeoPoint geoPoint)
    {
       setScreenPoint(geoPoint);
 
       //      Log.d( this, "Draw line to " + geoPoint+" with speed "+speed );
-
-      if (speed > 0)
-      {
-         int greenfactor = (int) Math.min((127 * speed) / mAvgSpeed, 255);
-         int redfactor = 255 - greenfactor;
-         mCurrentColor = Color.rgb(redfactor, greenfactor, 0);
-      }
-      else
-      {
-         int greenfactor = Color.green(mCurrentColor);
-         int redfactor = Color.red(mCurrentColor);
-         mCurrentColor = Color.argb(128, redfactor, greenfactor, 0);
-      }
+      int greenfactor = Color.green(mCurrentColor);
+      int redfactor = Color.red(mCurrentColor);
+      mCurrentColor = Color.argb(128, redfactor, greenfactor, 0);
 
       float distance = (float) distanceInPoints(this.mPrevDrawnScreenPoint, this.mScreenPoint);
       if (distance > MINIMUM_PX_DISTANCE)
@@ -812,14 +771,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
          //            {
          //               Log.d( this, "Created shader for speed " + speed + " on " + x_circle + "," + y_circle );
          //            }
-         if (this.mShader != null)
-         {
-            this.mShader = new ComposeShader(this.mShader, lastShader, Mode.DST_OVER);
-         }
-         else
-         {
-            this.mShader = lastShader;
-         }
          this.mPrevDrawnScreenPoint.x = this.mScreenPoint.x;
          this.mPrevDrawnScreenPoint.y = this.mScreenPoint.y;
       }
@@ -1127,31 +1078,6 @@ public class SegmentOverlay extends Overlay implements OverlayProxy
       int microLatitude = (int) (mWaypointsCursor.getDouble(0) * 1E6d);
       int microLongitude = (int) (mWaypointsCursor.getDouble(1) * 1E6d);
       return new GeoPoint(microLatitude, microLongitude);
-   }
-
-   /**
-    * @param startLocation
-    * @param endLocation
-    * @return speed in m/s between 2 locations
-    */
-   private static double calculateSpeedBetweenLocations(Location startLocation, Location endLocation)
-   {
-      double speed = -1d;
-      if (startLocation != null && endLocation != null)
-      {
-         float distance = startLocation.distanceTo(endLocation);
-         float seconds = (endLocation.getTime() - startLocation.getTime()) / 1000f;
-         speed = distance / seconds;
-         //         Log.d( this, "Found a speed of "+speed+ " over a distance of "+ distance+" in a time of "+seconds);
-      }
-      if (speed > 0)
-      {
-         return speed;
-      }
-      else
-      {
-         return -1d;
-      }
    }
 
    public static int extendPoint(int x1, int x2)

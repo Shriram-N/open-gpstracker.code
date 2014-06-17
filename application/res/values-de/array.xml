@@ -27,8 +27,6 @@
       name="trackcoloring_choices">
       <item>Grün</item>
       <item>Rot</item>
-      <item>Geschwindigkeit</item>
-      <item>Durchschnittsgeschwindigkeit speed</item>
       <item>Waypoints</item>
    </string-array>
 

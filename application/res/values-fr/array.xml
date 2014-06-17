@@ -27,8 +27,6 @@
       name="trackcoloring_choices">
       <item>Vert</item>
       <item>Rouge</item>
-      <item>Vitesse</item>
-      <item>Vitesse moyenne</item>
       <item>Points de parcours</item>
    </string-array>
 
