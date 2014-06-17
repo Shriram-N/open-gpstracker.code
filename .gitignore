@@ -12,6 +12,7 @@
 bin/
 gen/
 target/
+proguard/
 
 # Local configuration file (sdk path, etc)
 local.properties
