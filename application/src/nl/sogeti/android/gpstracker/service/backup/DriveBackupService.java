@@ -79,7 +79,8 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    private Uri localFile;
    private DriveFile remoteFile;
    private Activity activity;
-   private Handler handler;
+   private Handler backgroundHandler;
+   private Handler mainHandler;
 
    @Override
    public IBinder onBind(Intent intent)
@@ -101,14 +102,15 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
       {
          HandlerThread thread = new HandlerThread("DriveBackupService", android.os.Process.THREAD_PRIORITY_BACKGROUND);
          thread.start();
-         handler = new Handler(thread.getLooper());
+         backgroundHandler = new Handler(thread.getLooper());
+         mainHandler = new Handler(Looper.getMainLooper());
          //@formatter:off
          googleApiClient = new GoogleApiClient.Builder(this)
             .addApi(Drive.API)
             .addScope(Drive.SCOPE_FILE)
             .addConnectionCallbacks(this)
             .addOnConnectionFailedListener(this)
-            .setHandler(handler)
+            .setHandler(backgroundHandler)
             .build();
          //@formatter:on
       }
@@ -135,7 +137,7 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          googleApiClient.disconnect();
          googleApiClient = null;
       }
-      handler.post(new Runnable()
+      Runnable quit = new Runnable()
          {
             @SuppressLint("NewApi")
             @Override
@@ -150,7 +152,10 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
                   Looper.myLooper().quit();
                }
             }
-         });
+         };
+      backgroundHandler.post(quit);
+      backgroundHandler = null;
+      mainHandler = null;
    }
 
    @Override
@@ -359,8 +364,18 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    {
       if (activity != null)
       {
-         int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
-         activity.setProgress(value);
+         final int value = (int) ((10000 * bytesDownloaded) / bytesExpected);
+         if (activity != null)
+         {
+            mainHandler.post(new Runnable()
+               {
+                  @Override
+                  public void run()
+                  {
+                     activity.setProgress(value);
+                  }
+               });
+         }
       }
    }
 
@@ -438,14 +453,20 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
    {
 
       @Override
-      public void setIndeterminate(boolean indeterminate)
+      public void setIndeterminate(final boolean indeterminate)
       {
          Log.d(this, "setIndeterminate(indeterminate" + indeterminate + ")");
          if (activity != null)
          {
-            activity.setProgressBarIndeterminate(indeterminate);
+            mainHandler.post(new Runnable()
+               {
+                  @Override
+                  public void run()
+                  {
+                     activity.setProgressBarIndeterminate(indeterminate);
+                  }
+               });
          }
-
       }
 
       @Override
@@ -454,17 +475,31 @@ public class DriveBackupService extends Service implements ConnectionCallbacks, 
          Log.d(this, "started()");
          if (activity != null)
          {
-            activity.setProgressBarVisibility(true);
+            mainHandler.post(new Runnable()
+               {
+                  @Override
+                  public void run()
+                  {
+                     activity.setProgressBarVisibility(true);
+                  }
+               });
          }
       }
 
       @Override
-      public void setProgress(int value)
+      public void setProgress(final int value)
       {
          Log.d(this, "setProgress(value" + value + ")");
          if (activity != null)
          {
-            activity.setProgress(value);
+            mainHandler.post(new Runnable()
+               {
+                  @Override
+                  public void run()
+                  {
+                     activity.setProgress(value);
+                  }
+               });
          }
       }
 
